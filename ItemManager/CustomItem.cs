@@ -53,12 +53,33 @@ namespace ItemManager {
         /// The index of the player's inventory (-1 if none) that has the item.
         /// </summary>
         public int Index { get; internal set; }
+
+        private Pickup pickup;
+
         /// <summary>
         /// The dropped item entity (null if none).
         /// </summary>
-        public Pickup Pickup { get; internal set; }
+        public Pickup Pickup {
+            get => pickup;
+            set {
+                pickup = value;
 
-        private float durability;
+                if (pickup == null) {
+                    Inventory.SyncItemInfo info = Inventory.items[Index];
+                    info.durability = durability;
+                    Inventory.items[Index] = info;
+                }
+                else {
+                    durability = pickup.info.durability;
+
+                    Pickup.PickupInfo info = pickup.info;
+                    info.durability = UniqueId;
+                    pickup.Networkinfo = info;
+                }
+            }
+        }
+
+        internal float durability;
         /// <summary>
         /// <para>ALWAYS USE THIS FOR DURABILITY.</para>
         /// <para>Because the ID system is durability based, this must be handled by this property's custom logic.</para>
@@ -69,7 +90,6 @@ namespace ItemManager {
                 if (Pickup == null) {
                     Inventory.SyncItemInfo item = Inventory.items[Index];
                     item.durability = value;
-
                     Inventory.items[Index] = item;
                 }
                 else {

@@ -52,7 +52,8 @@ namespace ItemManager.Utilities {
             };
 
             customItem.Pickup = Items.hostInventory.SetPickup((int) customItem.DefaultItemId,
-                customItem.DefaultDurability, position,
+                customItem.UniqueId, 
+                position,
                 rotation).GetComponent<Pickup>();
 
             RegisterEvents(customItem);
@@ -66,13 +67,11 @@ namespace ItemManager.Utilities {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
 
+                durability = pickup.info.durability,
                 Pickup = pickup
             };
 
-            Pickup.PickupInfo info = pickup.info;
-            info.itemId = (int) customItem.ItemId;
-            info.durability = customItem.UniqueId;
-            pickup.Networkinfo = info;
+            customItem.ItemId = customItem.DefaultItemId;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -85,13 +84,12 @@ namespace ItemManager.Utilities {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
 
+                durability = inventory.items[index].durability,
                 Inventory = inventory,
                 Index = index
             };
-
-            Inventory.SyncItemInfo info = inventory.items[index];
-            info.id = (int) customItem.ItemId;
-            inventory.items[index] = info;
+            
+            customItem.ItemId = customItem.DefaultItemId;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
