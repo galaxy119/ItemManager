@@ -71,7 +71,7 @@ namespace ItemManager.Utilities {
                 Pickup = pickup
             };
 
-            customItem.ItemId = customItem.DefaultItemId;
+            customItem.SetItemType(customItem.DefaultItemId);
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -89,7 +89,7 @@ namespace ItemManager.Utilities {
                 Index = index
             };
             
-            customItem.ItemId = customItem.DefaultItemId;
+            customItem.SetItemType(customItem.DefaultItemId);
 
             RegisterEvents(customItem);
             customItem.OnInitialize();

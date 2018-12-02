@@ -7,7 +7,7 @@ namespace ItemManager {
         author = "4aiur",
         description = "Allows other plugins to register custom item associations.",
         id = "4aiur.custom.itemmanager",
-        version = "1.0",
+        version = "1.0.0",
         SmodMajor = 3,
         SmodMinor = 0,
         SmodRevision = 0)]

@@ -152,7 +152,7 @@ namespace ItemManager {
                     Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item))
                         .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
-                    item.Pickup = Items.hostInventory.SetPickup((int)item.ItemId, pickup.info.durability,
+                    item.Pickup = Items.hostInventory.SetPickup((int)item.ItemType, pickup.info.durability,
                         pickup.info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
                         pickup.info.rotation).GetComponent<Pickup>();
                     pickup.Delete();

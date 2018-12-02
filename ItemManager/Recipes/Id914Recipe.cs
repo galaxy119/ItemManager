@@ -56,7 +56,7 @@ namespace ItemManager.Recipes {
                     item.Delete();
 
                     item = Items.CreateItem(OutputId, item.Pickup.transform.position, item.Pickup.transform.rotation);
-                    item.Durability = OutputDurability;
+                    item.SetDurability(OutputDurability);
                 } else {
                     throw new IndexOutOfRangeException("No registered items have the specified output ID.");
                 }

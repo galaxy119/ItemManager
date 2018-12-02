@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace ItemManager.Utilities {
-    public class FloatIdManager {
+    internal class FloatIdManager {
         private readonly byte[] bytes;
 
         /// <summary>

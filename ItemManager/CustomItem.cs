@@ -13,24 +13,20 @@ namespace ItemManager {
         /// </summary>
         public int PsuedoType { get; internal set; }
         
-        private ItemType itemId;
         /// <summary>
         /// The ID of the item to impersonate.
         /// </summary>
-        public ItemType ItemId {
-            get => itemId;
-            set {
-                itemId = value;
-
+        public ItemType ItemType {
+            get => Pickup == null ? (ItemType)Inventory.items[Index].id : (ItemType)pickup.info.itemId;
+            protected set {
                 if (Pickup == null) {
-                    Inventory.SyncItemInfo item = Inventory.items[Index];
-                    item.id = (int)itemId;
+                    Inventory.SyncItemInfo info = Inventory.items[Index];
+                    info.id = (int)value;
 
-                    Inventory.items[Index] = item;
-                }
-                else {
+                    Inventory.items[Index] = info;
+                } else {
                     Pickup.PickupInfo info = Pickup.info;
-                    info.itemId = (int)itemId;
+                    info.itemId = (int)value;
 
                     Pickup.Networkinfo = info;
                 }
@@ -61,7 +57,7 @@ namespace ItemManager {
         /// </summary>
         public Pickup Pickup {
             get => pickup;
-            set {
+            internal set {
                 pickup = value;
 
                 if (pickup == null) {
@@ -86,13 +82,12 @@ namespace ItemManager {
         /// </summary>
         public float Durability {
             get => Pickup == null ? Inventory.items[Index].durability : durability;
-            set {
+            protected set {
                 if (Pickup == null) {
                     Inventory.SyncItemInfo item = Inventory.items[Index];
                     item.durability = value;
                     Inventory.items[Index] = item;
-                }
-                else {
+                } else {
                     durability = value;
                 }
             }
@@ -132,5 +127,13 @@ namespace ItemManager {
         }
 
         public virtual void On914(KnobSetting knob, Vector3 output) { }
+
+        internal void SetItemType(ItemType value) {
+            ItemType = value;
+        }
+
+        internal void SetDurability(float value) {
+            Durability = value;
+        }
     }
 }
