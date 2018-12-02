@@ -11,35 +11,20 @@ namespace ItemManager {
     public class Items {
         internal static Inventory hostInventory;
         internal static Scp914 scp;
-        internal static FloatIdManager ids;
+        internal static FloatIdManager ids = new FloatIdManager();
 
-        internal static Dictionary<float, CustomItem> customItems;
-        internal static Dictionary<int, CustomItemHandler> registeredItems;
+        internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
+        internal static Dictionary<int, CustomItemHandler> registeredItems = new Dictionary<int, CustomItemHandler>();
 
-        internal static Dictionary<float, IDoubleDroppable> registeredDoubleDrop;
-        internal static Dictionary<float, bool> readyForDoubleDrop;
-        internal static Dictionary<float, int> doubleDropTimers;
-        
-        internal static Dictionary<float, IWeapon> registeredWeapons;
-        
-        internal static List<Base914Recipe> recipes;
+        internal static Dictionary<float, IDoubleDroppable> registeredDoubleDrop = new Dictionary<float, IDoubleDroppable>();
+        internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
+        internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
+
+        internal static Dictionary<float, IWeapon> registeredWeapons = new Dictionary<float, IWeapon>();
+
+        internal static List<Base914Recipe> recipes = new List<Base914Recipe>();
 
         public const float DefaultDurability = -4.656647E+11f;
-
-        internal static void Init() {
-            ids = new FloatIdManager();
-
-            customItems = new Dictionary<float, CustomItem>();
-            registeredItems = new Dictionary<int, CustomItemHandler>();
-
-            registeredDoubleDrop = new Dictionary<float, IDoubleDroppable>();
-            readyForDoubleDrop = new Dictionary<float, bool>();
-            doubleDropTimers = new Dictionary<float, int>();
-
-            registeredWeapons = new Dictionary<float, IWeapon>();
-
-            recipes = new List<Base914Recipe>();
-        }
 
         /// <summary>
         /// Adds a 914 recipe to the recipe list.
@@ -71,11 +56,15 @@ namespace ItemManager {
         /// </summary>
         /// <param name="id">ID of the registered item to remove.</param>
         public static bool RemoveItem(int id) {
-            foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key)) {
-                customItems.Remove(uniqId);
+            if (registeredItems.Remove(id)) {
+                foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key)) {
+                    customItems.Remove(uniqId);
+                }
+
+                return true;
             }
 
-            return registeredItems.Remove(id);
+            return false;
         }
 
         /// <summary>
@@ -90,7 +79,10 @@ namespace ItemManager {
                 throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
             }
 
-            return registeredItems[id].Create(position, rotation);
+            CustomItem creation = registeredItems[id].Create(position, rotation);
+            customItems.Add(creation.UniqueId, creation);
+
+            return creation;
         }
 
         /// <summary>
@@ -100,9 +92,13 @@ namespace ItemManager {
         /// <param name="inventory">Inventory of the player holding the item.</param>
         /// <param name="index">Index at which the item is being held at.</param>
         public static CustomItem ConvertItem(int id, Inventory inventory, int index) {
-            CustomItem creation = registeredItems[id].Create(inventory, index);
+            if (!registeredItems.ContainsKey(id)) {
+                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
+            }
 
+            CustomItem creation = registeredItems[id].Create(inventory, index);
             customItems.Add(creation.UniqueId, creation);
+
             return creation;
         }
 
@@ -112,9 +108,13 @@ namespace ItemManager {
         /// <param name="id">Psuedo ID of the custom item.</param>
         /// <param name="pickup">Item on the ground that should be registered.</param>
         public static CustomItem ConvertItem(int id, Pickup pickup) {
-            CustomItem creation = registeredItems[id].Create(pickup);
+            if (!registeredItems.ContainsKey(id)) {
+                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
+            }
 
+            CustomItem creation = registeredItems[id].Create(pickup);
             customItems.Add(creation.UniqueId, creation);
+
             return creation;
         }
     }
