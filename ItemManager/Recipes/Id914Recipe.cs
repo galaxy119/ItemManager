@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Smod2.API;
 using UnityEngine;
 
@@ -9,10 +7,10 @@ namespace ItemManager.Recipes {
         public KnobSetting Knob { get; }
 
         public int InputId { get; }
-        public bool InputIsCustom { get; }
+        public bool InputIsVanilla { get; }
 
         public int OutputId { get; }
-        public bool OutputIsCustom { get; }
+        public bool OutputIsVanilla { get; }
 
         public float OutputDurability { get; }
 
@@ -20,29 +18,44 @@ namespace ItemManager.Recipes {
             Knob = knob;
 
             InputId = inputId;
-            InputIsCustom = inputId < 30;
+            InputIsVanilla = inputId < 30;
 
             OutputId = outputId;
-            OutputIsCustom = outputId < 30;
+            OutputIsVanilla = outputId < 30;
 
             OutputDurability = outputDurability;
         }
 
         private void CreateOutput(Pickup pickup) {
-            Vector3 position = pickup.info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position);
-
-            if (OutputIsCustom) {
-                Pickup drop = Items.hostInventory.SetPickup(OutputId, OutputDurability,
-                    position,
-                    pickup.info.rotation).GetComponent<Pickup>();
-
-                Pickup.PickupInfo info = drop.info;
+            if (OutputIsVanilla) {
+                Pickup.PickupInfo info = pickup.info;
+                info.itemId = OutputId;
                 info.durability = OutputDurability;
-                drop.Networkinfo = info;
+
+                pickup.Networkinfo = info;
             }
             else {
                 if (Items.registeredItems.ContainsKey(OutputId)) {
-                    CustomItem item = Items.CreateItem(OutputId, position, pickup.info.rotation);
+                    Items.ConvertItem(OutputId, pickup);
+                } else {
+                    throw new IndexOutOfRangeException("No registered items have the specified output ID.");
+                }
+            }
+        }
+
+        private void CreateOutput(CustomItem item) {
+            if (OutputIsVanilla) {
+                item.Delete();
+
+                Pickup.PickupInfo info = item.Pickup.info;
+                info.itemId = OutputId;
+                info.durability = OutputDurability;
+                item.Pickup.Networkinfo = info;
+            } else {
+                if (Items.registeredItems.ContainsKey(OutputId)) {
+                    item.Delete();
+
+                    item = Items.CreateItem(OutputId, item.Pickup.transform.position, item.Pickup.transform.rotation);
                     item.Durability = OutputDurability;
                 } else {
                     throw new IndexOutOfRangeException("No registered items have the specified output ID.");
@@ -51,21 +64,19 @@ namespace ItemManager.Recipes {
         }
 
         public override bool IsMatch(KnobSetting knob, Pickup pickup) {
-            return !InputIsCustom && knob == Knob && pickup.info.itemId == InputId;
+            return InputIsVanilla && knob == Knob && pickup.info.itemId == InputId;
         }
 
         public override bool IsMatch(KnobSetting knob, CustomItem item) {
-            return InputIsCustom && knob == Knob && item.PsuedoType == InputId;
+            return !InputIsVanilla && knob == Knob && item.PsuedoType == InputId;
         }
 
         public override void Run(Pickup pickup) {
-            pickup.Delete();
             CreateOutput(pickup);
         }
 
         public override void Run(CustomItem item) {
-            item.Delete();
-            CreateOutput(item.Pickup);
+            CreateOutput(item);
         }
     }
 }
