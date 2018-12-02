@@ -14,7 +14,7 @@ namespace ItemManager {
     public class ItemManager : Plugin {
         public override void Register() {
             AddEventHandlers(new Timing(Info));
-            AddEventHandlers(new EventHandlers(this));
+            AddEventHandlers(new EventHandlers());
         }
 
         public override void OnEnable() {
