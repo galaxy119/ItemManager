@@ -29,23 +29,18 @@ namespace ItemManager {
             customItem.Index = index;
             customItem.Pickup = null;
 
-            item.durability = customItem.Durability;
-            inventory.items[index] = item;
-
             if (!customItem.OnPickup()) {
                 customItem.Player = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
-                customItem.Pickup = Items.hostInventory.SetPickup(item.id, customItem.Durability, player.transform.position,
+                customItem.Pickup = Items.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
                     player.transform.rotation).GetComponent<Pickup>();
             }
         }
 
-        private static void BaseInvokeDropEvent(CustomItem customItem, GameObject player, Inventory inventory, int index,
+        private static void BaseInvokeDropEvent(CustomItem customItem, Inventory inventory, int index,
             Pickup drop, Func<bool> result) {
             customItem.Pickup = drop;
-            customItem.Durability = drop.info.durability;
-            drop.info.durability = customItem.UniqueId;
 
             if (!result()) {
                 customItem.Pickup = null;
@@ -59,12 +54,12 @@ namespace ItemManager {
             customItem.Index = -1;
         }
 
-        private static void InvokeDropEvent(CustomItem customItem, GameObject player, Inventory inventory, int index, Pickup drop) {
-            BaseInvokeDropEvent(customItem, player, inventory, index, drop, customItem.OnDrop);
+        private static void InvokeDropEvent(CustomItem customItem, Inventory inventory, int index, Pickup drop) {
+            BaseInvokeDropEvent(customItem, inventory, index, drop, customItem.OnDrop);
         }
 
-        private static void InvokeDoubleDropEvent(CustomItem customItem, GameObject player, Inventory inventory, int index, Pickup drop) {
-            BaseInvokeDropEvent(customItem, player, inventory, index, drop, Items.registeredDoubleDrop[customItem.UniqueId].OnDoubleDrop);
+        private static void InvokeDoubleDropEvent(CustomItem customItem, Inventory inventory, int index, Pickup drop) {
+            BaseInvokeDropEvent(customItem, inventory, index, drop, Items.registeredDoubleDrop[customItem.UniqueId].OnDoubleDrop);
         }
 
         private static Inventory.SyncItemInfo ReinsertItem(Inventory inventory, int index, Pickup.PickupInfo info) {
@@ -87,7 +82,7 @@ namespace ItemManager {
 
                 if (Items.customItems.ContainsKey(item.durability)) {
                     CustomItem customItem = Items.customItems[item.durability];
-
+                    
                     InvokePickupEvent(customItem, player, inventory, inventory.items.Count - 1, item);
                 }
             });
@@ -107,15 +102,18 @@ namespace ItemManager {
                 Inventory.SyncItemInfo[] postItems = inventory.items.Select(x => x).ToArray();
                 int dropIndex = preItems.IndexOf(preItems.First(x => !postItems.Contains(x)));
 
-                if (Items.customItems.ContainsKey(drop.info.durability)) {
-                    CustomItem customItem = Items.customItems[drop.info.durability];
+                CustomItem[] itemsInInventory = Items.customItems.Values.Where(x => x.Inventory == inventory).ToArray();
+                CustomItem customItem = Items.customItems.ContainsKey(drop.info.durability) ? 
+                    Items.customItems[drop.info.durability] :
+                    itemsInInventory.FirstOrDefault(x => x.Index == dropIndex);
 
+                if (customItem != null) {
                     if (Items.registeredDoubleDrop.ContainsKey(customItem.UniqueId)) {
                         if (Items.readyForDoubleDrop[customItem.UniqueId]) {
                             Items.readyForDoubleDrop[customItem.UniqueId] = false;
                             Timing.RemoveTimer(Items.doubleDropTimers[customItem.UniqueId]);
-                            
-                            InvokeDoubleDropEvent(customItem, player, inventory, dropIndex, drop);
+
+                            InvokeDoubleDropEvent(customItem, inventory, dropIndex, drop);
                         } else {
                             Pickup.PickupInfo info = drop.info;
                             drop.Delete(); //delete dropped item
@@ -130,16 +128,17 @@ namespace ItemManager {
                                 drop = Items.hostInventory //create item in world
                                     .SetPickup(info.itemId, info.durability, player.transform.position, player.transform.rotation)
                                     .GetComponent<Pickup>();
-                                
-                                InvokeDropEvent(customItem, player, inventory, dropIndex, drop);
+
+                                InvokeDropEvent(customItem, inventory, dropIndex, drop);
                             }, Items.registeredDoubleDrop[customItem.UniqueId].DoubleDropWindow));
                         }
                     }
-
-                    InvokeDropEvent(customItem, player, inventory, dropIndex, drop);
+                    else {
+                        InvokeDropEvent(customItem, inventory, dropIndex, drop);
+                    }
                 }
                 
-                foreach (CustomItem entry in Items.customItems.Values.Where(x => x.Inventory == inventory && x.Index > dropIndex)) {
+                foreach (CustomItem entry in itemsInInventory.Where(x => x.Index > dropIndex)) {
                     entry.Index--;
                 }
             });
@@ -149,7 +148,7 @@ namespace ItemManager {
             foreach (Pickup pickup in ev.Inputs.Cast<Collider>().Select(x => x.GetComponent<Pickup>()).Where(x => x != null)) {
                 if (Items.customItems.ContainsKey(pickup.info.durability)) {
                     CustomItem item = Items.customItems[pickup.info.durability];
-
+                    
                     Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item))
                         .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
@@ -166,15 +165,16 @@ namespace ItemManager {
                     }
                 }
                 else {
-                    Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, pickup))
-                        .OrderByDescending(x => x.Priority).FirstOrDefault();
+                    Pickup.PickupInfo info = pickup.info;
+                    pickup.Delete();
+                    Pickup output = Items.hostInventory.SetPickup(info.itemId, 
+                        info.durability, 
+                        info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), 
+                        info.rotation).GetComponent<Pickup>();
 
-                    if (recipe != null) {
-                        Pickup.PickupInfo info = pickup.info;
-                        pickup.Delete();
-                         
-                        recipe.Run(Items.hostInventory.SetPickup(info.itemId, info.durability, info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), info.rotation).GetComponent<Pickup>());
-                    }
+                    Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, output))
+                        .OrderByDescending(x => x.Priority).FirstOrDefault()
+                        ?.Run(output);
                 }
             }
         }
@@ -205,13 +205,13 @@ namespace ItemManager {
                 GameObject player = (GameObject)ev.Player.GetGameObject();
                 Inventory inventory = player.GetComponent<Inventory>();
                 CustomItem item = Items.customItems.FirstOrDefault(x =>
-                    x.Value.Inventory == inventory && x.Value.Index == inventory.curItem).Value;
+                    x.Value.Player == player && x.Value.Index == inventory.GetItemIndex()).Value;
 
                 if (item != null) {
                     IWeapon weapon = Items.customItems.ContainsKey(item.UniqueId)
                         ? Items.registeredWeapons[item.UniqueId]
                         : null;
-
+                    
                     if (weapon != null) {
                         float damage = 0;
                         weapon.OnHit(null, ref damage);
