@@ -13,7 +13,9 @@ namespace scp4aiur {
     /// <summary>
     /// Module for easy and efficient frame-based timers
     /// </summary>
-    public class Timing : IEventHandlerUpdate {
+    internal class Timing : IEventHandlerUpdate {
+        private static Action<string> log;
+
         private static int nextNextTickId;
         private static int nextNextTicksId;
         private static int nextTimersId;
@@ -22,7 +24,9 @@ namespace scp4aiur {
         private static Dictionary<int, NextTicksQueue> nextTicks;
         private static Dictionary<int, TimerQueue> timers;
 
-        public Timing() {
+        public Timing(Action<string> log) {
+            Timing.log = log;
+
             nextNextTickId = int.MinValue;
             nextNextTicksId = int.MinValue;
             nextTimersId = int.MinValue;
@@ -108,7 +112,11 @@ namespace scp4aiur {
                     Action action = nextTick[id];
                     nextTick.Remove(id); //remove from queue before running so it doesnt loop if exception is thrown
 
-                    action();
+                    try {
+                        action();
+                    } catch (Exception e) {
+                        log($"Exception thrown by next-tick job:\n{e}");
+                    }
                 }
             }
 
@@ -118,7 +126,12 @@ namespace scp4aiur {
                         Action action = nextTicks[id].action;
                         nextTicks.Remove(id); //remove from queue before running so it doesnt loop if exception is thrown
 
-                        action();
+                        try {
+                            action();
+                        }
+                        catch (Exception e) {
+                            log($"Exception thrown by next-ticks job:\n{e}");
+                        }
                     }
                 }
             }
@@ -131,7 +144,11 @@ namespace scp4aiur {
                         float timeLeft = timers[id].timeLeft;
                         timers.Remove(id); //remove from queue before running so it doesnt loop if exception is thrown
 
-                        action(timeLeft); //run with the inaccuracy as argument
+                        try {
+                            action(timeLeft); //run with inaccuracy as argument
+                        } catch (Exception e) {
+                            log($"Exception thrown by timed job:\n{e}");
+                        }
                     }
                 }
             }

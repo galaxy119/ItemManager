@@ -1,10 +1,6 @@
 ﻿using Smod2;
 using Smod2.Attributes;
 using scp4aiur;
-using ItemManager.Recipes;
-
-using System.Collections.Generic;
-using System.Linq;
 
 namespace ItemManager {
     [PluginDetails(
@@ -17,10 +13,8 @@ namespace ItemManager {
         SmodRevision = 0)]
     public class ItemManager : Plugin {
         public override void Register() {
-            Items.Init();
-
-            AddEventHandlers(new Timing());
-            AddEventHandlers(new EventHandlers());
+            AddEventHandlers(new Timing(Info));
+            AddEventHandlers(new EventHandlers(this));
         }
 
         public override void OnEnable() {
