@@ -6,9 +6,10 @@ using ItemManager.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Smod2.API;
 
 namespace ItemManager {
-    public class Items {
+    public static class Items {
         internal static Inventory hostInventory;
         internal static Scp914 scp;
         internal static FloatIdManager ids = new FloatIdManager();
@@ -116,6 +117,49 @@ namespace ItemManager {
             customItems.Add(creation.UniqueId, creation);
 
             return creation;
+        }
+
+        /// <summary>
+        /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
+        /// </summary>
+        /// <param name="player">Player of the held item to retrieve.</param>
+        public static CustomItem HeldCustomItem(this Player player) {
+            int heldIndex = player.GetCurrentItemIndex();
+            if (heldIndex == -1) {
+                return null;
+            }
+
+            GameObject unityPlayer = (GameObject) player.GetGameObject();
+
+            return customItems.Values.FirstOrDefault(x => x.Index == heldIndex && x.Player == unityPlayer);
+        }
+
+        /// <summary>
+        /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
+        /// </summary>
+        /// <param name="player">Player of the held item to retrieve.</param>
+        public static CustomItem HeldCustomItem(GameObject player) {
+            int heldIndex = player.GetComponent<Inventory>().GetItemIndex();
+
+            return heldIndex == -1 ? null : customItems.Values.FirstOrDefault(x => x.Index == heldIndex && x.Player == player);
+        }
+
+        /// <summary>
+        /// Finds and returns all custom items within a player's inventory.
+        /// </summary>
+        /// <param name="player">Player that should be checked for custom items.</param>
+        public static CustomItem[] GetCustomItems(this Player player) {
+            GameObject unityPlayer = (GameObject)player.GetGameObject();
+
+            return customItems.Values.Where(x => x.Player == unityPlayer).ToArray();
+        }
+
+        /// <summary>
+        /// Finds and returns all custom items within a player's inventory.
+        /// </summary>
+        /// <param name="player">Player that should be checked for custom items.</param>
+        public static CustomItem[] GetCustomItems(GameObject player) {
+            return customItems.Values.Where(x => x.Player == player).ToArray();
         }
     }
 }
