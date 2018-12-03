@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ItemManager {
+namespace ItemManager.Events {
     public interface IWeapon {
         /// <summary>
         /// Invoked when the item is used (e.g. shot one round, one laceration from micro, etc).
