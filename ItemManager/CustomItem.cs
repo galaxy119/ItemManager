@@ -18,7 +18,7 @@ namespace ItemManager {
         /// </summary>
         public ItemType ItemType {
             get => Pickup == null ? (ItemType)Inventory.items[Index].id : (ItemType)pickup.info.itemId;
-            protected set {
+            set {
                 if (Pickup == null) {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
                     info.id = (int)value;
@@ -51,7 +51,6 @@ namespace ItemManager {
         public int Index { get; internal set; }
 
         private Pickup pickup;
-
         /// <summary>
         /// The dropped item entity (null if none).
         /// </summary>
@@ -82,7 +81,7 @@ namespace ItemManager {
         /// </summary>
         public float Durability {
             get => Pickup == null ? Inventory.items[Index].durability : durability;
-            protected set {
+            set {
                 if (Pickup == null) {
                     Inventory.SyncItemInfo item = Inventory.items[Index];
                     item.durability = value;
