@@ -1,6 +1,6 @@
 ﻿using ItemManager;
+using ItemManager.Events;
 using ItemManager.Recipes;
-using scp4aiur;
 using Smod2.API;
 using UnityEngine;
 

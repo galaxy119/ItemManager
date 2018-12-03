@@ -6,6 +6,7 @@ using Smod2.Events;
 
 using scp4aiur;
 using ItemManager.Recipes;
+using ItemManager.Events;
 
 using System.Collections.Generic;
 using System.Linq;
