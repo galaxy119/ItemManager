@@ -206,7 +206,7 @@ namespace ItemManager {
         /// </summary>
         /// <param name="player">Player that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
-        public static CustomItem FindCustomItem(this GameObject player, int index) {
+        public static CustomItem FindCustomItem(GameObject player, int index) {
             return customItems.Values.First(x => x.Index == index && x.Player == player);
         }
 
