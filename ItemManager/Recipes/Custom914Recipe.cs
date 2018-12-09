@@ -12,8 +12,8 @@ namespace ItemManager.Recipes {
         /// </summary>
         public abstract int Input { get; }
 
-        public override bool IsMatch(KnobSetting knob, Pickup pickup) {
-            return Input < 30 && knob == Knob && pickup.info.itemId == Input;
+        public override bool IsMatch(KnobSetting knob, Pickup.PickupInfo pickup) {
+            return Input < 30 && knob == Knob && pickup.itemId == Input;
         }
 
         public override bool IsMatch(KnobSetting knob, CustomItem item) {

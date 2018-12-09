@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using Smod2.API;
+
 using ItemManager.Recipes;
 using ItemManager.Utilities;
 using ItemManager.Events;
@@ -6,7 +8,6 @@ using ItemManager.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Smod2.API;
 
 namespace ItemManager {
     public static class Items {
@@ -124,14 +125,7 @@ namespace ItemManager {
         /// </summary>
         /// <param name="player">Player of the held item to retrieve.</param>
         public static CustomItem HeldCustomItem(this Player player) {
-            int heldIndex = player.GetCurrentItemIndex();
-            if (heldIndex == -1) {
-                return null;
-            }
-
-            GameObject unityPlayer = (GameObject) player.GetGameObject();
-
-            return customItems.Values.FirstOrDefault(x => x.Index == heldIndex && x.Player == unityPlayer);
+            return HeldCustomItem((GameObject) player.GetGameObject());
         }
 
         /// <summary>
@@ -141,7 +135,7 @@ namespace ItemManager {
         public static CustomItem HeldCustomItem(GameObject player) {
             int heldIndex = player.GetComponent<Inventory>().GetItemIndex();
 
-            return heldIndex == -1 ? null : customItems.Values.FirstOrDefault(x => x.Index == heldIndex && x.Player == player);
+            return heldIndex == -1 ? null : FindCustomItem(player, heldIndex);
         }
 
         /// <summary>
@@ -176,9 +170,7 @@ namespace ItemManager {
         /// <param name="player">Player that is holding the item to check.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static bool IsCustomItem(this Player player, int index) {
-            GameObject unityPlayer = (GameObject)player.GetGameObject();
-
-            return customItems.Values.Any(x => x.Index == index && x.Player == unityPlayer);
+            return IsCustomItem((GameObject)player.GetGameObject(), index);
         }
 
         /// <summary>
@@ -196,9 +188,7 @@ namespace ItemManager {
         /// <param name="player">Player that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static CustomItem FindCustomItem(this Player player, int index) {
-            GameObject unityPlayer = (GameObject)player.GetGameObject();
-
-            return customItems.Values.First(x => x.Index == index && x.Player == unityPlayer);
+            return FindCustomItem((GameObject)player.GetGameObject(), index);
         }
 
         /// <summary>
@@ -207,7 +197,7 @@ namespace ItemManager {
         /// <param name="player">Player that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static CustomItem FindCustomItem(GameObject player, int index) {
-            return customItems.Values.First(x => x.Index == index && x.Player == player);
+            return customItems.Values.FirstOrDefault(x => x.Index == index && x.Player == player);
         }
 
         /// <summary>
@@ -215,55 +205,7 @@ namespace ItemManager {
         /// </summary>
         /// <param name="pickup">The vanilla item.</param>
         public static CustomItem FindCustomItem(this Pickup pickup) {
-            return customItems[pickup.info.durability];
-        }
-
-        /// <summary>
-        /// Tries to find a custom item from a vanilla item, and returns its success and outputs the item.
-        /// </summary>
-        /// <param name="player">Player that is holding the custom item.</param>
-        /// <param name="index">Index of the item in the player's inventory.</param>
-        /// <param name="item">Item that was found. Null if none.</param>
-        public static bool TryFindCustomItem(this Player player, int index, out CustomItem item) {
-            try {
-                item = FindCustomItem(player, index);
-                return true;
-            }
-            catch {
-                item = null;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Tries to find a custom item from a vanilla item, and returns its success and outputs the item.
-        /// </summary>
-        /// <param name="player">Player that is holding the custom item.</param>
-        /// <param name="index">Index of the item in the player's inventory.</param>
-        /// <param name="item">Item that was found. Null if none.</param>
-        public static bool TryFindCustomItem(GameObject player, int index, out CustomItem item) {
-            try {
-                item = FindCustomItem(player, index);
-                return true;
-            } catch {
-                item = null;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Tries to find a custom item from a vanilla item, and returns its success and outputs the item.
-        /// </summary>
-        /// <param name="pickup">The vanilla item.</param>
-        /// <param name="item">Item that was found. Null if none.</param>
-        public static bool TryFindCustomItem(this Pickup pickup, out CustomItem item) {
-            try {
-                item = FindCustomItem(pickup);
-                return true;
-            } catch {
-                item = null;
-                return false;
-            }
+            return customItems.ContainsKey(pickup.info.durability) ? customItems[pickup.info.durability] : null;
         }
     }
 }

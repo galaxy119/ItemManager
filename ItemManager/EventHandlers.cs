@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 using Smod2.EventHandlers;
@@ -8,12 +9,12 @@ using scp4aiur;
 using ItemManager.Recipes;
 using ItemManager.Events;
 
-using System.Collections.Generic;
 using System.Linq;
+using Smod2.API;
 using Object = UnityEngine.Object;
 
 namespace ItemManager {
-    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerHurt, IEventHandlerShoot {
+    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie {
         public void OnRoundStart(RoundStartEvent ev) {
             Items.scp = Object.FindObjectOfType<Scp914>();
             Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
@@ -44,9 +45,9 @@ namespace ItemManager {
             customItem.Pickup = drop;
 
             if (!result()) {
+                ReinsertItem(inventory, index, drop.info);
                 customItem.Pickup = null;
 
-                ReinsertItem(inventory, index, drop.info);
                 drop.Delete();
             }
 
@@ -61,6 +62,21 @@ namespace ItemManager {
 
         private static void InvokeDoubleDropEvent(CustomItem customItem, Inventory inventory, int index, Pickup drop) {
             BaseInvokeDropEvent(customItem, inventory, index, drop, Items.registeredDoubleDrop[customItem.UniqueId].OnDoubleDrop);
+        }
+
+        private static void InvokeDeathDropEvent(CustomItem customItem, Pickup drop) {
+            customItem.Pickup = drop;
+
+            if (!customItem.OnDeathDrop()) {
+                customItem.Pickup = null;
+
+                drop.Delete();
+                customItem.Delete();
+            }
+
+            customItem.Player = null;
+            customItem.Inventory = null;
+            customItem.Index = -1;
         }
 
         private static Inventory.SyncItemInfo ReinsertItem(Inventory inventory, int index, Pickup.PickupInfo info) {
@@ -92,21 +108,14 @@ namespace ItemManager {
         public void OnPlayerDropItem(PlayerDropItemEvent ev) {
             GameObject player = (GameObject) ev.Player.GetGameObject();
             Inventory inventory = player.GetComponent<Inventory>();
-
-            List<Inventory.SyncItemInfo> preItems = inventory.items.Select(x => x).ToList();
-            Pickup[] prePickups = Object.FindObjectsOfType<Pickup>();
+            
+            GetLostItem(inventory, out Pickup[] prePickups, out int[] preItems);
             
             Timing.NextTick(() => {
-                Pickup[] postPickups = Object.FindObjectsOfType<Pickup>();
-                Pickup drop = postPickups.First(x => !prePickups.Contains(x) && x.info.ownerPlayerID == ev.Player.PlayerId);
+                Pickup drop = GetLostItemTick(inventory, prePickups, preItems, out int dropIndex);
 
-                Inventory.SyncItemInfo[] postItems = inventory.items.Select(x => x).ToArray();
-                int dropIndex = preItems.IndexOf(preItems.First(x => !postItems.Contains(x)));
-
-                CustomItem[] itemsInInventory = Items.customItems.Values.Where(x => x.Inventory == inventory).ToArray();
-                CustomItem customItem = Items.customItems.ContainsKey(drop.info.durability) ? 
-                    Items.customItems[drop.info.durability] :
-                    itemsInInventory.FirstOrDefault(x => x.Index == dropIndex);
+                CustomItem customItem = Items.FindCustomItem(player, dropIndex);
+                CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), dropIndex);
 
                 if (customItem != null) {
                     if (Items.registeredDoubleDrop.ContainsKey(customItem.UniqueId)) {
@@ -119,7 +128,6 @@ namespace ItemManager {
                             Pickup.PickupInfo info = drop.info;
                             drop.Delete(); //delete dropped item
                             Inventory.SyncItemInfo doubleDropDummy = ReinsertItem(inventory, dropIndex, info); //add item back to inventory
-
                             Items.readyForDoubleDrop[customItem.UniqueId] = true;
 
                             Items.doubleDropTimers.Remove(customItem.UniqueId);
@@ -137,10 +145,6 @@ namespace ItemManager {
                     else {
                         InvokeDropEvent(customItem, inventory, dropIndex, drop);
                     }
-                }
-                
-                foreach (CustomItem entry in itemsInInventory.Where(x => x.Index > dropIndex)) {
-                    entry.Index--;
                 }
             });
         }
@@ -167,57 +171,129 @@ namespace ItemManager {
                 }
                 else {
                     Pickup.PickupInfo info = pickup.info;
-                    pickup.Delete();
-                    Pickup output = Items.hostInventory.SetPickup(info.itemId, 
-                        info.durability, 
-                        info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), 
-                        info.rotation).GetComponent<Pickup>();
 
-                    Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, output))
-                        .OrderByDescending(x => x.Priority).FirstOrDefault()
-                        ?.Run(output);
+                    Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, info))
+                        .OrderByDescending(x => x.Priority).FirstOrDefault();
+
+                    if (recipe != null) {
+                        pickup.Delete();
+                        
+                        recipe.Run(Items.hostInventory.SetPickup(info.itemId,
+                            info.durability,
+                            info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
+                            info.rotation).GetComponent<Pickup>());
+                    }
                 }
             }
         }
 
         public void OnPlayerHurt(PlayerHurtEvent ev) {
-            if (ev.Attacker != null) {
-                GameObject player = (GameObject)ev.Attacker.GetGameObject();
-                Inventory inventory = player.GetComponent<Inventory>();
-                CustomItem item = Items.customItems.FirstOrDefault(x =>
-                    x.Value.Inventory == inventory && x.Value.Index == inventory.curItem).Value;
+            CustomItem customItem = ev.Attacker?.HeldCustomItem();
 
-                if (item != null) {
-                    IWeapon weapon = Items.customItems.ContainsKey(item.UniqueId)
-                        ? Items.registeredWeapons[item.UniqueId]
-                        : null;
+            if (customItem != null) {
+                if (Items.registeredWeapons.ContainsKey(customItem.UniqueId)) {
+                    float damage = ev.Damage;
+                    
+                    Items.registeredWeapons[customItem.UniqueId].OnHit((GameObject)ev.Player.GetGameObject(), ref damage);
 
-                    if (weapon != null) {
-                        float damage = ev.Damage;
-                        weapon.OnHit((GameObject)ev.Player.GetGameObject(), ref damage);
-                        ev.Damage = damage;
-                    }
+                    ev.Damage = damage;
                 }
             }
         }
 
         public void OnShoot(PlayerShootEvent ev) {
             if (ev.Target == null && ev.Player != null) {
-                GameObject player = (GameObject)ev.Player.GetGameObject();
-                Inventory inventory = player.GetComponent<Inventory>();
-                CustomItem item = Items.customItems.FirstOrDefault(x =>
-                    x.Value.Player == player && x.Value.Index == inventory.GetItemIndex()).Value;
+                CustomItem customItem = ev.Player.HeldCustomItem();
+                if (customItem != null &&
+                    Items.registeredWeapons.ContainsKey(customItem.UniqueId)) {
 
-                if (item != null) {
-                    IWeapon weapon = Items.customItems.ContainsKey(item.UniqueId)
-                        ? Items.registeredWeapons[item.UniqueId]
-                        : null;
-                    
-                    if (weapon != null) {
-                        float damage = 0;
-                        weapon.OnHit(null, ref damage);
-                    }
+                    float damage = 0;
+                    Items.registeredWeapons[customItem.UniqueId].OnHit(null, ref damage);
                 }
+            }
+        }
+
+        public void OnMedkitUse(PlayerMedkitUseEvent ev) {
+            Inventory inventory = ((GameObject) ev.Player.GetGameObject()).GetComponent<Inventory>();
+            GetLostItem(inventory, out Inventory.SyncItemInfo[] preItems);
+
+            Timing.NextTick(() => {
+                GetLostItemTick(inventory, preItems, out int index);
+
+                CorrectItemIndexes(ev.Player.GetCustomItems(), index);
+            });
+        }
+
+        private static void GetLostItem(Inventory inventory, out Inventory.SyncItemInfo[] preItems) {
+            preItems = inventory.items.ToArray();
+        }
+
+        private static Inventory.SyncItemInfo GetLostItemTick(Inventory inventory, Inventory.SyncItemInfo[] preItems, out int index) {
+            int[] postItems = inventory.items.Select(x => x.uniq).ToArray();
+
+            index = postItems.Length;
+            for (int i = 0; i < postItems.Length; i++) {
+                if (preItems[i].uniq != postItems[i]) {
+                    index = i;
+
+                    break;
+                }
+            }
+
+            return preItems[index];
+        }
+
+        private static void GetLostItem(Inventory inventory, out Pickup[] prePickups, out int[] preItems) {
+            prePickups = Object.FindObjectsOfType<Pickup>();
+            preItems = inventory.items.Select(x => x.uniq).ToArray();
+        }
+
+        private static Pickup GetLostItemTick(Inventory inventory, Pickup[] prePickups, int[] preItems, out int index) {
+            Pickup[] postPickups = Object.FindObjectsOfType<Pickup>();
+            int[] postItems = inventory.items.Select(x => x.uniq).ToArray();
+
+            index = postItems.Length;
+            for (int i = 0; i < postItems.Length; i++) {
+                if (preItems[i] != postItems[i]) {
+                    index = i;
+
+                    break;
+                }
+            }
+            
+            return postPickups.Except(prePickups).First();
+        }
+
+        private static void CorrectItemIndexes(CustomItem[] items, int index) {
+            foreach (CustomItem item in items.Where(x => x.Index > index)) {
+                item.Index--;
+            }
+        }
+
+        public void OnPlayerDie(PlayerDeathEvent ev) {
+            List<CustomItem> items = ev.Player.GetCustomItems().ToList();
+
+            if (items.Count > 0) {
+                Dictionary<CustomItem, ItemType> itemTypes = items.ToDictionary(x => x, x => x.ItemType);
+                Vector3 deathPosition = ((GameObject)ev.Player.GetGameObject()).transform.position;
+                Pickup[] prePickups = Object.FindObjectsOfType<Pickup>();
+
+                Timing.NextTick(() => {
+                    Pickup[] postPickups = Object.FindObjectsOfType<Pickup>();
+                    Pickup[] pickupsThisTick = postPickups.Except(prePickups).ToArray();
+                    Pickup[] deathPickups = pickupsThisTick
+                        .Where(x => Vector3.Distance(deathPosition, x.transform.position) < 10).ToArray();
+
+                    foreach (Pickup pickup in deathPickups) {
+                        CustomItem customItemOfType = itemTypes.FirstOrDefault(x => (int)x.Value == pickup.info.itemId).Key;
+
+                        if (customItemOfType != null) {
+                            items.Remove(customItemOfType);
+
+                            InvokeDeathDropEvent(customItemOfType, pickup);
+                        }
+                    }
+                });
             }
         }
     }

@@ -15,15 +15,15 @@ namespace Example
         SmodMajor = 3,
         SmodMinor = 0,
         SmodRevision = 0)]
-    public class Example : Plugin {
+    public class Example : Smod2.Plugin {
         internal static Action<string> log;
 
         public override void Register() {
-            Items.AddItem<BetterMedkit>(31);
-            Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
+            ItemManager.Items.AddItem<BetterMedkit>(31);
+            ItemManager.Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
 
-            Items.AddItem<BetterM4>(32);
-            Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));
+            ItemManager.Items.AddItem<BetterM4>(32);
+            ItemManager.Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));
 
             log = Info;
         }

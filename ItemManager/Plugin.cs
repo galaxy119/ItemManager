@@ -1,5 +1,4 @@
-﻿using Smod2;
-using Smod2.Attributes;
+﻿using Smod2.Attributes;
 using scp4aiur;
 
 namespace ItemManager {
@@ -9,10 +8,14 @@ namespace ItemManager {
         id = "4aiur.custom.itemmanager",
         version = "1.0.0",
         SmodMajor = 3,
-        SmodMinor = 0,
+        SmodMinor = 1,
         SmodRevision = 0)]
-    public class ItemManager : Plugin {
+    public class Plugin : Smod2.Plugin {
+        internal static Plugin instance;
+
         public override void Register() {
+            instance = this;
+
             AddEventHandlers(new Timing(Info));
             AddEventHandlers(new EventHandlers());
         }

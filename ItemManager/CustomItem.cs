@@ -121,6 +121,9 @@ namespace ItemManager {
         public virtual bool OnDrop() {
             return true;
         }
+        public virtual bool OnDeathDrop() {
+            return true;
+        }
         public virtual bool OnPickup() {
             return true;
         }

@@ -1,6 +1,5 @@
 ﻿using System;
 using Smod2.API;
-using UnityEngine;
 
 namespace ItemManager.Recipes {
     public class Id914Recipe : Base914Recipe {
@@ -63,8 +62,8 @@ namespace ItemManager.Recipes {
             }
         }
 
-        public override bool IsMatch(KnobSetting knob, Pickup pickup) {
-            return InputIsVanilla && knob == Knob && pickup.info.itemId == InputId;
+        public override bool IsMatch(KnobSetting knob, Pickup.PickupInfo pickup) {
+            return InputIsVanilla && knob == Knob && pickup.itemId == InputId;
         }
 
         public override bool IsMatch(KnobSetting knob, CustomItem item) {

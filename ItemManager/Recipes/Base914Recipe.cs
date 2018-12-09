@@ -12,7 +12,7 @@ namespace ItemManager.Recipes {
         /// </summary>
         /// <param name="knob">The knob setting of 914 when activated.</param>
         /// <param name="pickup">The vanilla item dropped in 914.</param>
-        public virtual bool IsMatch(KnobSetting knob, Pickup pickup) {
+        public virtual bool IsMatch(KnobSetting knob, Pickup.PickupInfo pickup) {
             return false;
         }
         /// <summary>
