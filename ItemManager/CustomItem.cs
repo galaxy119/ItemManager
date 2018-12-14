@@ -121,7 +121,7 @@ namespace ItemManager {
         public virtual bool OnDrop() {
             return true;
         }
-        public virtual bool OnDeathDrop() {
+        public virtual bool OnDeathDrop(GameObject attacker, DamageType damage) {
             return true;
         }
         public virtual bool OnPickup() {

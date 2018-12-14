@@ -64,10 +64,10 @@ namespace ItemManager {
             BaseInvokeDropEvent(customItem, inventory, index, drop, Items.registeredDoubleDrop[customItem.UniqueId].OnDoubleDrop);
         }
 
-        private static void InvokeDeathDropEvent(CustomItem customItem, Pickup drop) {
+        private static void InvokeDeathDropEvent(CustomItem customItem, Pickup drop, GameObject attacker, DamageType damage) {
             customItem.Pickup = drop;
 
-            if (!customItem.OnDeathDrop()) {
+            if (!customItem.OnDeathDrop(attacker, damage)) {
                 customItem.Pickup = null;
 
                 drop.Delete();
@@ -290,7 +290,7 @@ namespace ItemManager {
                         if (customItemOfType != null) {
                             items.Remove(customItemOfType);
 
-                            InvokeDeathDropEvent(customItemOfType, pickup);
+                            InvokeDeathDropEvent(customItemOfType, pickup, (GameObject)ev.Killer.GetGameObject(), ev.DamageTypeVar);
                         }
                     }
                 });
