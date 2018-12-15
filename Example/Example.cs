@@ -19,11 +19,11 @@ namespace Example
         internal static Action<string> log;
 
         public override void Register() {
-            ItemManager.Items.RegisterItem<BetterMedkit>(31);
-            ItemManager.Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
+            Items.RegisterItem<BetterMedkit>(31);
+            Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
 
-            ItemManager.Items.RegisterItem<BetterM4>(32);
-            ItemManager.Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));
+            Items.RegisterItem<BetterM4>(32);
+            Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));
 
             log = Info;
         }

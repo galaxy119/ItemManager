@@ -1,5 +1,6 @@
 ﻿using Smod2.Attributes;
 using scp4aiur;
+using Smod2.Config;
 
 namespace ItemManager {
     [PluginDetails(
@@ -12,9 +13,13 @@ namespace ItemManager {
         SmodRevision = 0)]
     public class Plugin : Smod2.Plugin {
         internal static Plugin instance;
+        internal static bool heldItems;
 
         public override void Register() {
             instance = this;
+
+            AddConfig(new ConfigSetting("itemmanager_helditems", true, SettingType.BOOL, true, "Whether or not ItemManager will take held items into account in 914."));
+            heldItems = true;
 
             AddEventHandlers(new Timing(Info));
             AddEventHandlers(new EventHandlers());

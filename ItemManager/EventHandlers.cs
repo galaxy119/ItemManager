@@ -12,17 +12,15 @@ using ItemManager.Events;
 using System.Linq;
 using Smod2.API;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace ItemManager {
-    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie {
+    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie {
         public void OnRoundStart(RoundStartEvent ev) {
+            Plugin.heldItems = Plugin.instance.GetConfigBool("itemmanager_helditems");
+
             Items.scp = Object.FindObjectOfType<Scp914>();
             Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
-        }
-
-        public void OnRoundRestart(RoundRestartEvent ev) {
-            Items.scp = null;
-            Items.hostInventory = null;
         }
 
         private static void InvokePickupEvent(CustomItem customItem, GameObject player, Inventory inventory, int index, Inventory.SyncItemInfo item) {
@@ -160,11 +158,13 @@ namespace ItemManager {
         }
 
         public void OnSCP914Activate(SCP914ActivateEvent ev) {
-            foreach (Pickup pickup in ev.Inputs.Cast<Collider>().Select(x => x.GetComponent<Pickup>()).Where(x => x != null)) {
+            Collider[] colliders = ev.Inputs.Cast<Collider>().ToArray();
+
+            foreach (Pickup pickup in colliders.Select(x => x.GetComponent<Pickup>()).Where(x => x != null)) {
                 if (Items.customItems.ContainsKey(pickup.info.durability)) {
                     CustomItem item = Items.customItems[pickup.info.durability];
                     
-                    Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item))
+                    Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, false))
                         .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
                     item.Pickup = Items.hostInventory.SetPickup((int)item.ItemType, pickup.info.durability,
@@ -173,10 +173,10 @@ namespace ItemManager {
                     pickup.Delete();
 
                     if (recipe != null) { //recipe has higher priority
-                        recipe.Run(item);
+                        recipe.Run(item, false);
                     }
                     else {
-                        item.On914(ev.KnobSetting, item.Pickup.transform.position);
+                        item.On914(ev.KnobSetting, item.Pickup.transform.position, false);
                     }
                 }
                 else {
@@ -192,6 +192,46 @@ namespace ItemManager {
                             info.durability,
                             info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
                             info.rotation).GetComponent<Pickup>());
+                    }
+                }
+            }
+
+            if (Plugin.heldItems) {
+                foreach (Inventory inventory in colliders.Select(x => x.GetComponent<Inventory>()).Where(x => x != null)) {
+                    for (int i = 0; i < inventory.items.Count; i++) {
+                        CustomItem item = Items.FindCustomItem(inventory.gameObject, i);
+
+                        if (item == null) {
+                            Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, inventory, i))
+                                .OrderByDescending(x => x.Priority).FirstOrDefault();
+
+                            if (recipe != null) {
+                                recipe.Run(inventory, i);
+                            } else {
+                                byte itemId = (byte) inventory.items[i].id;
+                                byte knobId = (byte) ev.KnobSetting;
+                                sbyte outputType = (sbyte)Items.scp.recipes[itemId].outputs[knobId].outputs[Random.Range(0, Items.scp.recipes[itemId].outputs[knobId].outputs.Count)];
+
+                                if (outputType > 0) {
+                                    inventory.items[i] = new Inventory.SyncItemInfo {
+                                        id = outputType,
+                                        uniq = inventory.items[i].uniq
+                                    };
+                                }
+                                else {
+                                    inventory.items.RemoveAt(i);
+                                }
+                            }
+                        } else {
+                            Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, true))
+                                .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
+
+                            if (recipe != null) {
+                                recipe.Run(item, true);
+                            } else {
+                                item.On914(ev.KnobSetting, item.Player.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
+                            }
+                        }
                     }
                 }
             }

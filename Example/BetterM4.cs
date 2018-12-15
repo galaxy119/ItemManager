@@ -44,7 +44,7 @@ namespace Example {
         public override int Input => (int) ItemType.E11_STANDARD_RIFLE;
 
         public override void Run(Pickup pickup) {
-            ItemManager.Items.ConvertItem(32, pickup);
+            Items.ConvertItem(32, pickup);
         }
     }
 }

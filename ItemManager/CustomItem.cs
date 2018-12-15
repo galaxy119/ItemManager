@@ -106,7 +106,7 @@ namespace ItemManager {
             return true;
         }
 
-        public virtual void On914(KnobSetting knob, Vector3 output) { }
+        public virtual void On914(KnobSetting knob, Vector3 output, bool heldItem) { }
 
         internal void SetItemType(ItemType value) {
             ItemType = value;
