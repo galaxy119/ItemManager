@@ -13,13 +13,13 @@ namespace ItemManager {
         SmodRevision = 0)]
     public class Plugin : Smod2.Plugin {
         internal static Plugin instance;
-        internal static bool heldItems;
+        internal static int heldItems;
 
         public override void Register() {
             instance = this;
 
-            AddConfig(new ConfigSetting("itemmanager_helditems", true, SettingType.BOOL, true, "Whether or not ItemManager will take held items into account in 914."));
-            heldItems = true;
+            AddConfig(new ConfigSetting("itemmanager_helditems", 3, SettingType.NUMERIC, true, "Whether or not ItemManager will take held items into account in 914. 0 for none, 1 for only custom items, 2 for only normal items, 3 for all items."));
+            heldItems = 3;
 
             AddEventHandlers(new Timing(Info));
             AddEventHandlers(new EventHandlers());

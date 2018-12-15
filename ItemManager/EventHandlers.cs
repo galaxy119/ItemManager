@@ -17,7 +17,7 @@ using Random = UnityEngine.Random;
 namespace ItemManager {
     public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie {
         public void OnRoundStart(RoundStartEvent ev) {
-            Plugin.heldItems = Plugin.instance.GetConfigBool("itemmanager_helditems");
+            Plugin.heldItems = Plugin.instance.GetConfigInt("itemmanager_helditems");
 
             Items.scp = Object.FindObjectOfType<Scp914>();
             Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
@@ -196,40 +196,43 @@ namespace ItemManager {
                 }
             }
 
-            if (Plugin.heldItems) {
+            if (Plugin.heldItems > 0) {
                 foreach (Inventory inventory in colliders.Select(x => x.GetComponent<Inventory>()).Where(x => x != null)) {
                     for (int i = 0; i < inventory.items.Count; i++) {
                         CustomItem item = Items.FindCustomItem(inventory.gameObject, i);
 
                         if (item == null) {
-                            Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, inventory, i))
-                                .OrderByDescending(x => x.Priority).FirstOrDefault();
+                            if (Plugin.heldItems == 1 || Plugin.heldItems == 3) {
+                                Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, inventory, i))
+                                    .OrderByDescending(x => x.Priority).FirstOrDefault();
 
-                            if (recipe != null) {
-                                recipe.Run(inventory, i);
-                            } else {
-                                byte itemId = (byte) inventory.items[i].id;
-                                byte knobId = (byte) ev.KnobSetting;
-                                sbyte outputType = (sbyte)Items.scp.recipes[itemId].outputs[knobId].outputs[Random.Range(0, Items.scp.recipes[itemId].outputs[knobId].outputs.Count)];
+                                if (recipe != null) {
+                                    recipe.Run(inventory, i);
+                                } else {
+                                    byte itemId = (byte)inventory.items[i].id;
+                                    byte knobId = (byte)ev.KnobSetting;
+                                    sbyte outputType = (sbyte)Items.scp.recipes[itemId].outputs[knobId].outputs[Random.Range(0, Items.scp.recipes[itemId].outputs[knobId].outputs.Count)];
 
-                                if (outputType > 0) {
-                                    inventory.items[i] = new Inventory.SyncItemInfo {
-                                        id = outputType,
-                                        uniq = inventory.items[i].uniq
-                                    };
-                                }
-                                else {
-                                    inventory.items.RemoveAt(i);
+                                    if (outputType > 0) {
+                                        inventory.items[i] = new Inventory.SyncItemInfo {
+                                            id = outputType,
+                                            uniq = inventory.items[i].uniq
+                                        };
+                                    } else {
+                                        inventory.items.RemoveAt(i);
+                                    }
                                 }
                             }
                         } else {
-                            Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, true))
-                                .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
+                            if (Plugin.heldItems == 2 || Plugin.heldItems == 3) {
+                                Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, true))
+                                    .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
-                            if (recipe != null) {
-                                recipe.Run(item, true);
-                            } else {
-                                item.On914(ev.KnobSetting, item.Player.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
+                                if (recipe != null) {
+                                    recipe.Run(item, true);
+                                } else {
+                                    item.On914(ev.KnobSetting, item.Player.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
+                                }
                             }
                         }
                     }
