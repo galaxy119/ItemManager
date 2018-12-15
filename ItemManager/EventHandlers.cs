@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace ItemManager {
-    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie {
+    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch {
         public void OnRoundStart(RoundStartEvent ev) {
             Plugin.heldItems = Plugin.instance.GetConfigInt("itemmanager_helditems");
 
@@ -244,36 +244,38 @@ namespace ItemManager {
             CustomItem customItem = ev.Attacker?.HeldCustomItem();
 
             if (customItem != null) {
-                if (Items.registeredWeapons.ContainsKey(customItem.UniqueId)) {
-                    float damage = ev.Damage;
-                    
-                    Items.registeredWeapons[customItem.UniqueId].OnHit((GameObject)ev.Player.GetGameObject(), ref damage);
+                float damage = ev.Damage;
 
-                    ev.Damage = damage;
-                }
+                customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
+
+                ev.Damage = damage;
             }
         }
 
         public void OnShoot(PlayerShootEvent ev) {
             if (ev.Target == null && ev.Player != null) {
                 CustomItem customItem = ev.Player.HeldCustomItem();
-                if (customItem != null &&
-                    Items.registeredWeapons.ContainsKey(customItem.UniqueId)) {
+
+                if (customItem != null) {
 
                     float damage = 0;
-                    Items.registeredWeapons[customItem.UniqueId].OnHit(null, ref damage);
+                    customItem.OnShoot(null, ref damage);
                 }
             }
         }
 
         public void OnMedkitUse(PlayerMedkitUseEvent ev) {
-            Inventory inventory = ((GameObject) ev.Player.GetGameObject()).GetComponent<Inventory>();
+            GameObject player = (GameObject) ev.Player.GetGameObject();
+            Inventory inventory = player.GetComponent<Inventory>();
             GetLostItem(inventory, out Inventory.SyncItemInfo[] preItems);
-
+            
             Timing.NextTick(() => {
                 GetLostItemTick(inventory, preItems, out int index);
 
+                CustomItem item = Items.FindCustomItem(player, index);
                 CorrectItemIndexes(ev.Player.GetCustomItems(), index);
+
+                item.OnMedkitUse();
             });
         }
 
@@ -347,6 +349,12 @@ namespace ItemManager {
                         }
                     }
                 });
+            }
+        }
+
+        public void OnPlayerRadioSwitch(PlayerRadioSwitchEvent ev) {
+            foreach (CustomItem customItem in ev.Player.GetCustomItems()) {
+                customItem.OnRadioSwitch(ev.ChangeTo);
             }
         }
     }

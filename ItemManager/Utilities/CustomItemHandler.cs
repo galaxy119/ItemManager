@@ -44,10 +44,6 @@ namespace ItemManager.Utilities {
                 Items.registeredDoubleDrop.Add(item.UniqueId, doubleDroppable);
                 Items.readyForDoubleDrop.Add(item.UniqueId, false);
             }
-
-            if (item is IWeapon shootable) {
-                Items.registeredWeapons.Add(item.UniqueId, shootable);
-            }
         }
 
         public override CustomItem Create(Vector3 position, Quaternion rotation) {

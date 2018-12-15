@@ -61,7 +61,6 @@
     <Compile Include="CustomItem.cs" />
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Events\IDoubleDroppable.cs" />
-    <Compile Include="Events\IWeapon.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Items.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -60,6 +60,7 @@ namespace ItemManager {
         /// <summary>
         /// <para>ALWAYS USE THIS FOR DURABILITY.</para>
         /// <para>Because the ID system is durability based, this must be handled by this property's custom logic.</para>
+        /// <para>Durability is used for if a micro has a charge (1), how many rounds are in a gun (# of rounds), and how much battery there is in a radio (battery % as whole number).</para>
         /// </summary>
         public float Durability {
             get => Pickup == null ? Inventory.items[Index].durability : durability;
@@ -90,11 +91,11 @@ namespace ItemManager {
                 Items.readyForDoubleDrop.Remove(UniqueId);
             }
 
-            OnDeleted();
+            OnDelete();
         }
 
         public virtual void OnInitialize() { }
-        public virtual void OnDeleted() { }
+        public virtual void OnDelete() { }
 
         public virtual bool OnDrop() {
             return true;
@@ -107,6 +108,9 @@ namespace ItemManager {
         }
 
         public virtual void On914(KnobSetting knob, Vector3 output, bool heldItem) { }
+        public virtual void OnRadioSwitch(RadioStatus status) { }
+        public virtual void OnShoot(GameObject target, ref float damage) { }
+        public virtual void OnMedkitUse() { }
 
         internal void SetItemType(ItemType value) {
             ItemType = value;

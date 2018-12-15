@@ -22,8 +22,6 @@ namespace ItemManager {
         internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
         internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
 
-        internal static Dictionary<float, IWeapon> registeredWeapons = new Dictionary<float, IWeapon>();
-
         internal static List<Base914Recipe> recipes = new List<Base914Recipe>();
 
         public const float DefaultDurability = -4.656647E+11f;

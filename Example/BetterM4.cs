@@ -5,7 +5,7 @@ using Smod2.API;
 using UnityEngine;
 
 namespace Example {
-    public class BetterM4 : CustomItem, IWeapon {
+    public class BetterM4 : CustomItem {
         public override ItemType DefaultItemId => ItemType.E11_STANDARD_RIFLE;
 
         public BetterM4() {
@@ -30,7 +30,7 @@ namespace Example {
             return true;
         }
 
-        public void OnHit(GameObject target, ref float damage) {
+        public override void OnShoot(GameObject target, ref float damage) {
             Inventory.SyncItemInfo info = Inventory.items[Index];
             info.durability += 2;
             Inventory.items[Index] = info;
