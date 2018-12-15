@@ -31,12 +31,16 @@ namespace ItemManager {
             customItem.Index = index;
             customItem.Pickup = null;
 
+            customItem.ApplyInventory();
+
             if (!customItem.OnPickup()) {
                 customItem.Player = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
                 customItem.Pickup = Items.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
                     player.transform.rotation).GetComponent<Pickup>();
+
+                customItem.ApplyPickup();
             }
         }
 
@@ -44,11 +48,14 @@ namespace ItemManager {
             Pickup drop, Func<bool> result) {
             customItem.Pickup = drop;
 
+            customItem.ApplyPickup();
+
             if (!result()) {
                 ReinsertItem(inventory, index, drop.info);
                 customItem.Pickup = null;
-
                 drop.Delete();
+
+                customItem.ApplyInventory();
             }
 
             customItem.Player = null;
@@ -67,16 +74,19 @@ namespace ItemManager {
         private static void InvokeDeathDropEvent(CustomItem customItem, Pickup drop, GameObject attacker, DamageType damage) {
             customItem.Pickup = drop;
 
+            customItem.ApplyPickup();
+
             if (!customItem.OnDeathDrop(attacker, damage)) {
                 customItem.Pickup = null;
 
                 drop.Delete();
                 customItem.Delete();
             }
-
-            customItem.Player = null;
-            customItem.Inventory = null;
-            customItem.Index = -1;
+            else {
+                customItem.Player = null;
+                customItem.Inventory = null;
+                customItem.Index = -1;
+            }
         }
 
         private static Inventory.SyncItemInfo ReinsertItem(Inventory inventory, int index, Pickup.PickupInfo info) {

@@ -28,6 +28,14 @@ namespace ItemManager {
 
         public const float DefaultDurability = -4.656647E+11f;
 
+        public static IEnumerable<CustomItem> AllItems() {
+            return customItems.Select(x => x.Value);
+        }
+
+        public static IEnumerable<T> AllItems<T>() where T : CustomItem {
+            return AllItems().OfType<T>();
+        }
+
         /// <summary>
         /// Adds a 914 recipe to the recipe list.
         /// </summary>
@@ -49,7 +57,7 @@ namespace ItemManager {
         /// </summary>
         /// <typeparam name="TItem">The type (which inherits CustomItem) to register.</typeparam>
         /// <param name="id">The ID to register the type to.</param>
-        public static void AddItem<TItem>(int id) where TItem : CustomItem, new() {
+        public static void RegisterItem<TItem>(int id) where TItem : CustomItem, new() {
             registeredItems.Add(id, new CustomItemHandler<TItem>(id));
         }
 
@@ -57,7 +65,7 @@ namespace ItemManager {
         /// Unregisters a custom item from an ID.
         /// </summary>
         /// <param name="id">ID of the registered item to remove.</param>
-        public static bool RemoveItem(int id) {
+        public static bool UnregisterItem(int id) {
             if (registeredItems.Remove(id)) {
                 foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key)) {
                     customItems.Remove(uniqId);
@@ -85,6 +93,33 @@ namespace ItemManager {
             customItems.Add(creation.UniqueId, creation);
 
             return creation;
+        }
+
+        /// <summary>
+        /// Gives an item to a specified player.
+        /// </summary>
+        /// <param name="player">The player to receive the item.</param>
+        /// <param name="id">The ID of the item to give the player.</param>
+        /// <returns></returns>
+        public static CustomItem GiveItem(GameObject player, int id) {
+            if (!registeredItems.ContainsKey(id)) {
+                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
+            }
+
+            CustomItem creation = registeredItems[id].Create(player.GetComponent<Inventory>());
+            customItems.Add(creation.UniqueId, creation);
+
+            return creation;
+        }
+
+        /// <summary>
+        /// Gives an item to a specified player.
+        /// </summary>
+        /// <param name="player">The player to receive the item.</param>
+        /// <param name="id">The ID of the item to give the player.</param>
+        /// <returns></returns>
+        public static CustomItem GiveItem(this Player player, int id) {
+            return GiveItem((GameObject) player.GetGameObject(), id);
         }
 
         /// <summary>

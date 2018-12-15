@@ -17,7 +17,7 @@ namespace ItemManager {
         /// The ID of the item to impersonate.
         /// </summary>
         public ItemType ItemType {
-            get => Pickup == null ? (ItemType)Inventory.items[Index].id : (ItemType)pickup.info.itemId;
+            get => Pickup == null ? (ItemType) Inventory.items[Index].id : (ItemType) Pickup.info.itemId;
             set {
                 if (Pickup == null) {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
@@ -32,6 +32,7 @@ namespace ItemManager {
                 }
             }
         }
+
         /// <summary>
         /// The item ID of a newly-created item.
         /// </summary>
@@ -49,30 +50,11 @@ namespace ItemManager {
         /// The index of the player's inventory (-1 if none) that has the item.
         /// </summary>
         public int Index { get; internal set; }
-
-        private Pickup pickup;
+        
         /// <summary>
         /// The dropped item entity (null if none).
         /// </summary>
-        public Pickup Pickup {
-            get => pickup;
-            internal set {
-                pickup = value;
-
-                if (pickup == null) {
-                    Inventory.SyncItemInfo info = Inventory.items[Index];
-                    info.durability = durability;
-                    Inventory.items[Index] = info;
-                }
-                else {
-                    durability = pickup.info.durability;
-
-                    Pickup.PickupInfo info = pickup.info;
-                    info.durability = UniqueId;
-                    pickup.Networkinfo = info;
-                }
-            }
-        }
+        public Pickup Pickup { get; internal set; }
 
         internal float durability;
         /// <summary>
@@ -91,10 +73,6 @@ namespace ItemManager {
                 }
             }
         }
-        /// <summary>
-        /// Default durability of a newly-created item.
-        /// </summary>
-        public virtual float DefaultDurability => Items.DefaultDurability;
 
         /// <summary>
         /// The status of whether or not this item has been deleted from the world.
@@ -136,6 +114,28 @@ namespace ItemManager {
 
         internal void SetDurability(float value) {
             Durability = value;
+        }
+
+        internal void ApplyPickup() {
+            durability = Pickup.info.durability;
+
+            Pickup.PickupInfo info = Pickup.info;
+            info.durability = UniqueId;
+            Pickup.Networkinfo = info;
+        }
+
+        internal void ApplyInventory() {
+            Inventory.SyncItemInfo info = Inventory.items[Index];
+            info.durability = durability;
+            Inventory.items[Index] = info;
+        }
+
+        internal void ApplyPickupChangee() {
+            if (Pickup == null) {
+                ApplyInventory();
+            } else {
+                ApplyPickup();
+            }
         }
     }
 }

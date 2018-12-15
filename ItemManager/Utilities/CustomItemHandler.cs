@@ -15,6 +15,11 @@ namespace ItemManager.Utilities {
         /// <param name="rotation">Rotation of the custom item.</param>
         public abstract CustomItem Create(Vector3 position, Quaternion rotation);
         /// <summary>
+        /// Creates a custom item of this type and adds it to an inventory.
+        /// </summary>
+        /// <param name="inventory">Inventory of the player to create the item for.</param>
+        public abstract CustomItem Create(Inventory inventory);
+        /// <summary>
         /// Creates a custom item of this type from the pickup;
         /// </summary>
         /// <param name="pickup">Pickup to turn into custom item.</param>
@@ -48,13 +53,30 @@ namespace ItemManager.Utilities {
         public override CustomItem Create(Vector3 position, Quaternion rotation) {
             TItem customItem = new TItem {
                 PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId()
+                UniqueId = Items.ids.NewId(),
             };
 
             customItem.Pickup = Items.hostInventory.SetPickup((int) customItem.DefaultItemId,
                 customItem.UniqueId, 
                 position,
                 rotation).GetComponent<Pickup>();
+
+            RegisterEvents(customItem);
+            customItem.OnInitialize();
+
+            return customItem;
+        }
+
+        public override CustomItem Create(Inventory inventory) {
+            TItem customItem = new TItem {
+                PsuedoType = PsuedoId,
+                UniqueId = Items.ids.NewId(),
+                
+                Player = inventory.gameObject,
+                Inventory = inventory,
+                Index = inventory.items.Count
+            };
+            inventory.AddNewItem((int)customItem.DefaultItemId);
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -85,6 +107,7 @@ namespace ItemManager.Utilities {
                 UniqueId = Items.ids.NewId(),
 
                 durability = inventory.items[index].durability,
+                Player = inventory.gameObject,
                 Inventory = inventory,
                 Index = index
             };
