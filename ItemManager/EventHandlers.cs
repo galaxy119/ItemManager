@@ -55,10 +55,11 @@ namespace ItemManager {
 
                 customItem.ApplyInventory();
             }
-
-            customItem.Player = null;
-            customItem.Inventory = null;
-            customItem.Index = -1;
+            else {
+                customItem.Player = null;
+                customItem.Inventory = null;
+                customItem.Index = -1;
+            }
         }
 
         private static void InvokeDropEvent(CustomItem customItem, Inventory inventory, int index, Pickup drop) {
