@@ -40,8 +40,7 @@ namespace ItemManager.Utilities {
         }
 
         private static void RegisterEvents(TItem item) {
-            if (item is IDoubleDroppable doubleDroppable) {
-                Items.registeredDoubleDrop.Add(item.UniqueId, doubleDroppable);
+            if (item is IDoubleDroppable) {
                 Items.readyForDoubleDrop.Add(item.UniqueId, false);
             }
         }
@@ -55,7 +54,8 @@ namespace ItemManager.Utilities {
             customItem.Pickup = Items.hostInventory.SetPickup((int) customItem.DefaultItemId,
                 customItem.UniqueId, 
                 position,
-                rotation).GetComponent<Pickup>();
+                rotation,
+                0, 0, 0).GetComponent<Pickup>();
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -74,6 +74,7 @@ namespace ItemManager.Utilities {
             };
             inventory.AddNewItem((int)customItem.DefaultItemId);
 
+
             RegisterEvents(customItem);
             customItem.OnInitialize();
 
@@ -88,7 +89,7 @@ namespace ItemManager.Utilities {
                 durability = pickup.info.durability,
                 Pickup = pickup
             };
-
+            customItem.ApplyPickup();
             customItem.SetItemType(customItem.DefaultItemId);
 
             RegisterEvents(customItem);
@@ -107,7 +108,7 @@ namespace ItemManager.Utilities {
                 Inventory = inventory,
                 Index = index
             };
-            
+            customItem.ApplyInventory();
             customItem.SetItemType(customItem.DefaultItemId);
 
             RegisterEvents(customItem);

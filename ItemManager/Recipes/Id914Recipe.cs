@@ -45,7 +45,7 @@ namespace ItemManager.Recipes {
         }
 
         private void CreateOutput(CustomItem item, bool held) {
-            item.Delete();
+            item.Unhook();
 
             if (OutputIsVanilla) {
                 if (held) {

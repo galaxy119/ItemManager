@@ -9,7 +9,7 @@ namespace ItemManager {
         id = "4aiur.custom.itemmanager",
         version = "1.0.0",
         SmodMajor = 3,
-        SmodMinor = 1,
+        SmodMinor = 2,
         SmodRevision = 0)]
     public class Plugin : Smod2.Plugin {
         internal static Plugin instance;

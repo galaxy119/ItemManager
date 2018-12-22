@@ -17,8 +17,7 @@ namespace ItemManager {
 
         internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
         internal static Dictionary<int, CustomItemHandler> registeredItems = new Dictionary<int, CustomItemHandler>();
-
-        internal static Dictionary<float, IDoubleDroppable> registeredDoubleDrop = new Dictionary<float, IDoubleDroppable>();
+        
         internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
         internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
 
@@ -239,6 +238,12 @@ namespace ItemManager {
         /// <param name="pickup">The vanilla item.</param>
         public static CustomItem FindCustomItem(this Pickup pickup) {
             return customItems.ContainsKey(pickup.info.durability) ? customItems[pickup.info.durability] : null;
+        }
+
+        internal static void CorrectItemIndexes(CustomItem[] items, int index) {
+            foreach (CustomItem item in items.Where(x => x.Index > index)) {
+                item.Index--;
+            }
         }
     }
 }

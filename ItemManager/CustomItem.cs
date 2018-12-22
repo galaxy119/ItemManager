@@ -1,4 +1,5 @@
-﻿using scp4aiur;
+﻿using ItemManager.Events;
+using scp4aiur;
 using Smod2.API;
 using UnityEngine;
 
@@ -38,6 +39,72 @@ namespace ItemManager {
         /// </summary>
         public abstract ItemType DefaultItemId { get; }
 
+        public int Sight
+        {
+            get => Pickup == null ? Inventory.items[Index].modSight : Pickup.info.weaponMods[0];
+            set
+            {
+                if (Pickup == null)
+                {
+                    Inventory.SyncItemInfo info = Inventory.items[Index];
+                    info.modSight = value;
+
+                    Inventory.items[Index] = info;
+                }
+                else
+                {
+                    Pickup.PickupInfo info = Pickup.info;
+                    info.weaponMods[0] = value;
+
+                    Pickup.Networkinfo = info;
+                }
+            }
+        }
+
+        public int Barrel
+        {
+            get => Pickup == null ? Inventory.items[Index].modBarrel : Pickup.info.weaponMods[1];
+            set
+            {
+                if (Pickup == null)
+                {
+                    Inventory.SyncItemInfo info = Inventory.items[Index];
+                    info.modBarrel = value;
+
+                    Inventory.items[Index] = info;
+                }
+                else
+                {
+                    Pickup.PickupInfo info = Pickup.info;
+                    info.weaponMods[1] = value;
+
+                    Pickup.Networkinfo = info;
+                }
+            }
+        }
+
+        public int MiscAttachment
+        {
+            get => Pickup == null ? Inventory.items[Index].modOther : Pickup.info.weaponMods[2];
+            set
+            {
+                if (Pickup == null)
+                {
+                    Inventory.SyncItemInfo info = Inventory.items[Index];
+                    info.modOther = value;
+
+                    Inventory.items[Index] = info;
+                }
+                else
+                {
+                    Pickup.PickupInfo info = Pickup.info;
+                    info.weaponMods[2] = value;
+
+                    Pickup.Networkinfo = info;
+                }
+            }
+        }
+
         /// <summary>
         /// The player (null if none) that is holding this item.
         /// </summary>
@@ -75,27 +142,47 @@ namespace ItemManager {
             }
         }
 
-        /// <summary>
-        /// The status of whether or not this item has been deleted from the world.
-        /// </summary>
         public bool Deleted { get; private set; }
         public void Delete() {
             Deleted = true;
 
+            if (!Unhooked) {
+                Unhook();
+            }
+
+            if (Pickup == null) {
+                Inventory.items.RemoveAt(Index);
+                Items.CorrectItemIndexes(Items.GetCustomItems(Inventory.gameObject), Index);
+            }
+            else {
+                Pickup.Delete();
+            }
+
+            OnDelete();
+        }
+        public virtual void OnDelete() { }
+
+        /// <summary>
+        /// The status of whether or not this item has been deleted from the world.
+        /// </summary>
+        public bool Unhooked { get; private set; }
+        public void Unhook() {
+            Unhooked = true;
+
             Items.customItems.Remove(UniqueId);
 
-            if (Items.registeredDoubleDrop.Remove(UniqueId)) { //if double droppable
+            if (this is IDoubleDroppable) { //if double droppable
                 Timing.RemoveTimer(Items.doubleDropTimers[UniqueId]);
                 Items.doubleDropTimers.Remove(UniqueId);
 
                 Items.readyForDoubleDrop.Remove(UniqueId);
             }
 
-            OnDelete();
+            OnUnhooked();
         }
+        public virtual void OnUnhooked() { }
 
         public virtual void OnInitialize() { }
-        public virtual void OnDelete() { }
 
         public virtual bool OnDrop() {
             return true;

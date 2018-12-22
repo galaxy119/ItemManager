@@ -15,12 +15,19 @@ using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace ItemManager {
-    public class EventHandlers : IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerRoundStart, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch {
+    public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItem, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch {
         public void OnRoundStart(RoundStartEvent ev) {
             Plugin.heldItems = Plugin.instance.GetConfigInt("itemmanager_helditems");
 
             Items.scp = Object.FindObjectOfType<Scp914>();
             Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
+        }
+
+        public void OnRoundRestart(RoundRestartEvent ev) {
+            foreach (float uniq in Items.customItems.Keys.ToArray()) {
+                Items.customItems[uniq].Unhook();
+                Items.customItems.Remove(uniq);
+            }
         }
 
         private static void InvokePickupEvent(CustomItem customItem, GameObject player, Inventory inventory, int index, Inventory.SyncItemInfo item) {
@@ -32,11 +39,13 @@ namespace ItemManager {
             customItem.ApplyInventory();
 
             if (!customItem.OnPickup()) {
+                inventory.items.RemoveAt(index);
+
                 customItem.Player = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
                 customItem.Pickup = Items.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
-                    player.transform.rotation).GetComponent<Pickup>();
+                    player.transform.rotation, item.modSight, item.modBarrel, item.modOther).GetComponent<Pickup>();
 
                 customItem.ApplyPickup();
             }
@@ -67,7 +76,7 @@ namespace ItemManager {
         }
 
         private static void InvokeDoubleDropEvent(CustomItem customItem, Inventory inventory, int index, Pickup drop) {
-            BaseInvokeDropEvent(customItem, inventory, index, drop, Items.registeredDoubleDrop[customItem.UniqueId].OnDoubleDrop);
+            BaseInvokeDropEvent(customItem, inventory, index, drop, ((IDoubleDroppable)customItem).OnDoubleDrop);
         }
 
         private static void InvokeDeathDropEvent(CustomItem customItem, Pickup drop, GameObject attacker, DamageType damage) {
@@ -79,7 +88,7 @@ namespace ItemManager {
                 customItem.Pickup = null;
 
                 drop.Delete();
-                customItem.Delete();
+                customItem.Unhook();
             }
             else {
                 customItem.Player = null;
@@ -124,10 +133,10 @@ namespace ItemManager {
                 Pickup drop = GetLostItemTick(inventory, prePickups, preItems, out int dropIndex);
 
                 CustomItem customItem = Items.FindCustomItem(player, dropIndex);
-                CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), dropIndex);
+                Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), dropIndex);
 
                 if (customItem != null) {
-                    if (Items.registeredDoubleDrop.ContainsKey(customItem.UniqueId)) {
+                    if (customItem is IDoubleDroppable doubleDroppable && doubleDroppable.DoubleDropWindow != 0) {
                         if (Items.readyForDoubleDrop[customItem.UniqueId]) {
                             Items.readyForDoubleDrop[customItem.UniqueId] = false;
                             Timing.RemoveTimer(Items.doubleDropTimers[customItem.UniqueId]);
@@ -144,11 +153,11 @@ namespace ItemManager {
                                 Items.readyForDoubleDrop[customItem.UniqueId] = false;
                                 inventory.items.Remove(doubleDropDummy); //remove dummy from inventory
                                 drop = Items.hostInventory //create item in world
-                                    .SetPickup(info.itemId, info.durability, player.transform.position, player.transform.rotation)
+                                    .SetPickup(info.itemId, info.durability, player.transform.position, player.transform.rotation, info.weaponMods[0], info.weaponMods[1], info.weaponMods[2])
                                     .GetComponent<Pickup>();
 
                                 InvokeDropEvent(customItem, inventory, dropIndex, drop);
-                            }, Items.registeredDoubleDrop[customItem.UniqueId].DoubleDropWindow));
+                            }, doubleDroppable.DoubleDropWindow));
                         }
                     }
                     else {
@@ -170,7 +179,7 @@ namespace ItemManager {
 
                     item.Pickup = Items.hostInventory.SetPickup((int)item.ItemType, pickup.info.durability,
                         pickup.info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
-                        pickup.info.rotation).GetComponent<Pickup>();
+                        pickup.info.rotation, item.Sight, item.Barrel, item.MiscAttachment).GetComponent<Pickup>();
                     pickup.Delete();
 
                     if (recipe != null) { //recipe has higher priority
@@ -192,7 +201,7 @@ namespace ItemManager {
                         recipe.Run(Items.hostInventory.SetPickup(info.itemId,
                             info.durability,
                             info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
-                            info.rotation).GetComponent<Pickup>());
+                            info.rotation, info.weaponMods[0], info.weaponMods[1], info.weaponMods[2]).GetComponent<Pickup>());
                     }
                 }
             }
@@ -220,6 +229,7 @@ namespace ItemManager {
                                             uniq = inventory.items[i].uniq
                                         };
                                     } else {
+                                        Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), i);
                                         inventory.items.RemoveAt(i);
                                     }
                                 }
@@ -258,7 +268,6 @@ namespace ItemManager {
                 CustomItem customItem = ev.Player.HeldCustomItem();
 
                 if (customItem != null) {
-
                     float damage = 0;
                     customItem.OnShoot(null, ref damage);
                 }
@@ -274,9 +283,9 @@ namespace ItemManager {
                 GetLostItemTick(inventory, preItems, out int index);
 
                 CustomItem item = Items.FindCustomItem(player, index);
-                CorrectItemIndexes(ev.Player.GetCustomItems(), index);
+                Items.CorrectItemIndexes(ev.Player.GetCustomItems(), index);
 
-                item.OnMedkitUse();
+                item?.OnMedkitUse();
             });
         }
 
@@ -318,12 +327,6 @@ namespace ItemManager {
             }
             
             return postPickups.Except(prePickups).First();
-        }
-
-        private static void CorrectItemIndexes(CustomItem[] items, int index) {
-            foreach (CustomItem item in items.Where(x => x.Index > index)) {
-                item.Index--;
-            }
         }
 
         public void OnPlayerDie(PlayerDeathEvent ev) {
