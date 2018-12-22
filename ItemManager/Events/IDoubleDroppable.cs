@@ -1,9 +1,11 @@
-﻿namespace ItemManager.Events {
+﻿namespace ItemManager.Events
+{
     /// <summary>
     /// <para>Implements double droppability.</para>
     /// <para>Note: This must be inherited instead of being normal code in order to prevent drop lag for all custom items and to increase overall performance.</para>
     /// </summary>
-    public interface IDoubleDroppable {
+    public interface IDoubleDroppable
+    {
         /// <summary>
         /// Amount of time between two clicks to register for a double click.
         /// </summary>

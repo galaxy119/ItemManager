@@ -9,11 +9,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace scp4aiur {
+namespace scp4aiur
+{
     /// <summary>
     /// Module for easy and efficient frame-based timers
     /// </summary>
-    internal class Timing : IEventHandlerUpdate {
+    internal class Timing : IEventHandlerUpdate
+    {
         private static Action<string> log;
 
         private static int nextNextTickId;
@@ -24,7 +26,8 @@ namespace scp4aiur {
         private static Dictionary<int, NextTicksQueue> nextTicks;
         private static Dictionary<int, TimerQueue> timers;
 
-        public Timing(Action<string> log) {
+        public Timing(Action<string> log)
+        {
             Timing.log = log;
 
             nextNextTickId = int.MinValue;
@@ -40,7 +43,8 @@ namespace scp4aiur {
         /// Queues a job for the next tick.
         /// </summary>
         /// <param name="action">Job to execute.</param>
-        public static int NextTick(Action action) {
+        public static int NextTick(Action action)
+        {
             int id = nextNextTickId++;
             nextTick.Add(id, action);
 
@@ -51,7 +55,8 @@ namespace scp4aiur {
         /// Removes a job from the queue.
         /// </summary>
         /// <param name="id">ID of the job to remove.</param>
-        public static bool RemoveNextTick(int id) {
+        public static bool RemoveNextTick(int id)
+        {
             return nextTick.Remove(id);
         }
 
@@ -60,9 +65,11 @@ namespace scp4aiur {
         /// </summary>
         /// <param name="action">Job to execute.</param>
         /// <param name="ticks">Number of ticks to wait.</param>
-        public static int NextTicks(Action action, int ticks) {
+        public static int NextTicks(Action action, int ticks)
+        {
             int id = nextNextTicksId++;
-            nextTicks.Add(id, new NextTicksQueue {
+            nextTicks.Add(id, new NextTicksQueue
+            {
                 action = action,
                 ticksLeft = ticks
             });
@@ -74,7 +81,8 @@ namespace scp4aiur {
         /// Removes a job from the queue.
         /// </summary>
         /// <param name="id">ID of the job to remove.</param>
-        public static bool RemoveNextTicks(int id) {
+        public static bool RemoveNextTicks(int id)
+        {
             return nextTicks.Remove(id);
         }
 
@@ -83,9 +91,11 @@ namespace scp4aiur {
         /// </summary>
         /// <param name="action">Job to execute.</param>
         /// <param name="seconds">Number of seconds to wait.</param>
-        public static int Timer(Action<float> action, float seconds) {
+        public static int Timer(Action<float> action, float seconds)
+        {
             int id = nextTimersId++;
-            timers.Add(id, new TimerQueue {
+            timers.Add(id, new TimerQueue
+            {
                 action = action,
                 timeLeft = seconds
             });
@@ -97,7 +107,8 @@ namespace scp4aiur {
         /// Removes a job from the queue.
         /// </summary>
         /// <param name="id">ID of the job to remove.</param>
-        public static bool RemoveTimer(int id) {
+        public static bool RemoveTimer(int id)
+        {
             return timers.Remove(id);
         }
 
@@ -106,47 +117,64 @@ namespace scp4aiur {
         /// <para>This is an event for Smod2 and as such should not be called by any external code </para>
         /// </summary>
         /// <param name="ev"></param>
-        public void OnUpdate(UpdateEvent ev) {
-            if (nextTick.Count > 0) {
-                foreach (int id in nextTick.Select(x => x.Key).ToArray()) {
+        public void OnUpdate(UpdateEvent ev)
+        {
+            if (nextTick.Count > 0)
+            {
+                foreach (int id in nextTick.Select(x => x.Key).ToArray())
+                {
                     Action action = nextTick[id];
                     nextTick.Remove(id); //remove from queue before running so it doesnt loop if exception is thrown
 
-                    try {
+                    try
+                    {
                         action();
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         log($"Exception thrown by next-tick job:\n{e}");
                     }
                 }
             }
 
-            if (nextTicks.Count > 0) {
-                foreach (int id in nextTicks.Select(x => x.Key).ToArray()) {
-                    if (--nextTicks[id].ticksLeft == 0) { //if the job is scheduled for this tick
+            if (nextTicks.Count > 0)
+            {
+                foreach (int id in nextTicks.Select(x => x.Key).ToArray())
+                {
+                    if (--nextTicks[id].ticksLeft == 0)
+                    { //if the job is scheduled for this tick
                         Action action = nextTicks[id].action;
                         nextTicks.Remove(id); //remove from queue before running so it doesnt loop if exception is thrown
 
-                        try {
+                        try
+                        {
                             action();
                         }
-                        catch (Exception e) {
+                        catch (Exception e)
+                        {
                             log($"Exception thrown by next-ticks job:\n{e}");
                         }
                     }
                 }
             }
 
-            if (timers.Count > 0) {
-                foreach (int id in timers.Select(x => x.Key).ToArray()) {
-                    if ((timers[id].timeLeft -= Time.deltaTime) <= 0) {
+            if (timers.Count > 0)
+            {
+                foreach (int id in timers.Select(x => x.Key).ToArray())
+                {
+                    if ((timers[id].timeLeft -= Time.deltaTime) <= 0)
+                    {
                         //if the timer is up
                         Action<float> action = timers[id].action;
                         float timeLeft = timers[id].timeLeft;
                         timers.Remove(id); //remove from queue before running so it doesnt loop if exception is thrown
 
-                        try {
+                        try
+                        {
                             action(timeLeft); //run with inaccuracy as argument
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e)
+                        {
                             log($"Exception thrown by timed job:\n{e}");
                         }
                     }
@@ -154,12 +182,14 @@ namespace scp4aiur {
             }
         }
 
-        private class NextTicksQueue {
+        private class NextTicksQueue
+        {
             public int ticksLeft;
             public Action action;
         }
 
-        private class TimerQueue {
+        private class TimerQueue
+        {
             public float timeLeft;
             public Action<float> action;
         }

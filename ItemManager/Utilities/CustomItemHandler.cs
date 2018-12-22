@@ -1,8 +1,10 @@
 ﻿using ItemManager.Events;
 using UnityEngine;
 
-namespace ItemManager.Utilities {
-    internal abstract class CustomItemHandler {
+namespace ItemManager.Utilities
+{
+    internal abstract class CustomItemHandler
+    {
         /// <summary>
         /// The item ID to use when handling 914.
         /// </summary>
@@ -32,27 +34,33 @@ namespace ItemManager.Utilities {
         public abstract CustomItem Create(Inventory inventory, int index);
     }
 
-    internal class CustomItemHandler<TItem> : CustomItemHandler where TItem : CustomItem, new() {
+    internal class CustomItemHandler<TItem> : CustomItemHandler where TItem : CustomItem, new()
+    {
         public override int PsuedoId { get; }
 
-        public CustomItemHandler(int psuedoId) {
+        public CustomItemHandler(int psuedoId)
+        {
             PsuedoId = psuedoId;
         }
 
-        private static void RegisterEvents(TItem item) {
-            if (item is IDoubleDroppable) {
+        private static void RegisterEvents(TItem item)
+        {
+            if (item is IDoubleDroppable)
+            {
                 Items.readyForDoubleDrop.Add(item.UniqueId, false);
             }
         }
 
-        public override CustomItem Create(Vector3 position, Quaternion rotation) {
-            TItem customItem = new TItem {
+        public override CustomItem Create(Vector3 position, Quaternion rotation)
+        {
+            TItem customItem = new TItem
+            {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
             };
 
-            customItem.Pickup = Items.hostInventory.SetPickup((int) customItem.DefaultItemId,
-                customItem.UniqueId, 
+            customItem.Pickup = Items.hostInventory.SetPickup((int)customItem.DefaultItemId,
+                customItem.UniqueId,
                 position,
                 rotation,
                 0, 0, 0).GetComponent<Pickup>();
@@ -63,11 +71,13 @@ namespace ItemManager.Utilities {
             return customItem;
         }
 
-        public override CustomItem Create(Inventory inventory) {
-            TItem customItem = new TItem {
+        public override CustomItem Create(Inventory inventory)
+        {
+            TItem customItem = new TItem
+            {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
-                
+
                 Player = inventory.gameObject,
                 Inventory = inventory,
                 Index = inventory.items.Count
@@ -81,8 +91,10 @@ namespace ItemManager.Utilities {
             return customItem;
         }
 
-        public override CustomItem Create(Pickup pickup) {
-            TItem customItem = new TItem {
+        public override CustomItem Create(Pickup pickup)
+        {
+            TItem customItem = new TItem
+            {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
 
@@ -98,8 +110,10 @@ namespace ItemManager.Utilities {
             return customItem;
         }
 
-        public override CustomItem Create(Inventory inventory, int index) {
-            TItem customItem = new TItem {
+        public override CustomItem Create(Inventory inventory, int index)
+        {
+            TItem customItem = new TItem
+            {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
 

@@ -14,10 +14,12 @@ namespace Example
         SmodMajor = 3,
         SmodMinor = 0,
         SmodRevision = 0)]
-    public class Example : Smod2.Plugin {
+    public class Example : Smod2.Plugin
+    {
         internal static Action<string> log;
 
-        public override void Register() {
+        public override void Register()
+        {
             Items.RegisterItem<BetterMedkit>(31);
             Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
 
@@ -27,10 +29,12 @@ namespace Example
             log = Info;
         }
 
-        public override void OnEnable() {
+        public override void OnEnable()
+        {
         }
 
-        public override void OnDisable() {
+        public override void OnDisable()
+        {
         }
     }
 }

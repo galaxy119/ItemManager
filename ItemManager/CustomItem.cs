@@ -3,8 +3,10 @@ using scp4aiur;
 using Smod2.API;
 using UnityEngine;
 
-namespace ItemManager {
-    public abstract class CustomItem {
+namespace ItemManager
+{
+    public abstract class CustomItem
+    {
         /// <summary>
         /// The durability of the item in the pickup state, used for ID purposes.
         /// </summary>
@@ -13,19 +15,24 @@ namespace ItemManager {
         /// The psuedo ID to check custom item types.
         /// </summary>
         public int PsuedoType { get; internal set; }
-        
+
         /// <summary>
         /// The ID of the item to impersonate.
         /// </summary>
-        public ItemType ItemType {
-            get => Pickup == null ? (ItemType) Inventory.items[Index].id : (ItemType) Pickup.info.itemId;
-            set {
-                if (Pickup == null) {
+        public ItemType ItemType
+        {
+            get => Pickup == null ? (ItemType)Inventory.items[Index].id : (ItemType)Pickup.info.itemId;
+            set
+            {
+                if (Pickup == null)
+                {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
                     info.id = (int)value;
 
                     Inventory.items[Index] = info;
-                } else {
+                }
+                else
+                {
                     Pickup.PickupInfo info = Pickup.info;
                     info.itemId = (int)value;
 
@@ -117,7 +124,7 @@ namespace ItemManager {
         /// The index of the player's inventory (-1 if none) that has the item.
         /// </summary>
         public int Index { get; internal set; }
-        
+
         /// <summary>
         /// The dropped item entity (null if none).
         /// </summary>
@@ -129,32 +136,41 @@ namespace ItemManager {
         /// <para>Because the ID system is durability based, this must be handled by this property's custom logic.</para>
         /// <para>Durability is used for if a micro has a charge (1), how many rounds are in a gun (# of rounds), and how much battery there is in a radio (battery % as whole number).</para>
         /// </summary>
-        public float Durability {
+        public float Durability
+        {
             get => Pickup == null ? Inventory.items[Index].durability : durability;
-            set {
-                if (Pickup == null) {
+            set
+            {
+                if (Pickup == null)
+                {
                     Inventory.SyncItemInfo item = Inventory.items[Index];
                     item.durability = value;
                     Inventory.items[Index] = item;
-                } else {
+                }
+                else
+                {
                     durability = value;
                 }
             }
         }
 
         public bool Deleted { get; private set; }
-        public void Delete() {
+        public void Delete()
+        {
             Deleted = true;
 
-            if (!Unhooked) {
+            if (!Unhooked)
+            {
                 Unhook();
             }
 
-            if (Pickup == null) {
+            if (Pickup == null)
+            {
                 Inventory.items.RemoveAt(Index);
                 Items.CorrectItemIndexes(Items.GetCustomItems(Inventory.gameObject), Index);
             }
-            else {
+            else
+            {
                 Pickup.Delete();
             }
 
@@ -166,12 +182,14 @@ namespace ItemManager {
         /// The status of whether or not this item has been deleted from the world.
         /// </summary>
         public bool Unhooked { get; private set; }
-        public void Unhook() {
+        public void Unhook()
+        {
             Unhooked = true;
 
             Items.customItems.Remove(UniqueId);
 
-            if (this is IDoubleDroppable) { //if double droppable
+            if (this is IDoubleDroppable)
+            { //if double droppable
                 Timing.RemoveTimer(Items.doubleDropTimers[UniqueId]);
                 Items.doubleDropTimers.Remove(UniqueId);
 
@@ -184,13 +202,16 @@ namespace ItemManager {
 
         public virtual void OnInitialize() { }
 
-        public virtual bool OnDrop() {
+        public virtual bool OnDrop()
+        {
             return true;
         }
-        public virtual bool OnDeathDrop(GameObject attacker, DamageType damage) {
+        public virtual bool OnDeathDrop(GameObject attacker, DamageType damage)
+        {
             return true;
         }
-        public virtual bool OnPickup() {
+        public virtual bool OnPickup()
+        {
             return true;
         }
 
@@ -199,15 +220,18 @@ namespace ItemManager {
         public virtual void OnShoot(GameObject target, ref float damage) { }
         public virtual void OnMedkitUse() { }
 
-        internal void SetItemType(ItemType value) {
+        internal void SetItemType(ItemType value)
+        {
             ItemType = value;
         }
 
-        internal void SetDurability(float value) {
+        internal void SetDurability(float value)
+        {
             Durability = value;
         }
 
-        internal void ApplyPickup() {
+        internal void ApplyPickup()
+        {
             durability = Pickup.info.durability;
 
             Pickup.PickupInfo info = Pickup.info;
@@ -215,16 +239,21 @@ namespace ItemManager {
             Pickup.Networkinfo = info;
         }
 
-        internal void ApplyInventory() {
+        internal void ApplyInventory()
+        {
             Inventory.SyncItemInfo info = Inventory.items[Index];
             info.durability = durability;
             Inventory.items[Index] = info;
         }
 
-        internal void ApplyPickupChangee() {
-            if (Pickup == null) {
+        internal void ApplyPickupChangee()
+        {
+            if (Pickup == null)
+            {
                 ApplyInventory();
-            } else {
+            }
+            else
+            {
                 ApplyPickup();
             }
         }
