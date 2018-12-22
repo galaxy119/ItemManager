@@ -1,7 +1,6 @@
 ﻿using System;
 using ItemManager;
 using ItemManager.Recipes;
-using Smod2;
 using Smod2.API;
 using Smod2.Attributes;
 

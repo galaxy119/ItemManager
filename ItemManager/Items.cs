@@ -3,8 +3,6 @@ using Smod2.API;
 
 using ItemManager.Recipes;
 using ItemManager.Utilities;
-using ItemManager.Events;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;

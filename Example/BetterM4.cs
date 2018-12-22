@@ -1,5 +1,4 @@
 ﻿using ItemManager;
-using ItemManager.Events;
 using ItemManager.Recipes;
 using Smod2.API;
 using UnityEngine;
