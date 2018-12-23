@@ -77,13 +77,13 @@ namespace ItemManager.Utilities
             {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
-
+                
                 Player = inventory.gameObject,
                 Inventory = inventory,
                 Index = inventory.items.Count
             };
-            inventory.AddNewItem((int)customItem.DefaultItemId);
-
+            inventory.AddNewItem((int)customItem.DefaultItemId, 0);
+            customItem.Durability = Items.DefaultDurability;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
