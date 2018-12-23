@@ -73,22 +73,30 @@ namespace ItemManager.Utilities
 
         public override CustomItem Create(Inventory inventory)
         {
-            TItem customItem = new TItem
+            if (inventory.items.Count > 8)
             {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
-                
-                Player = inventory.gameObject,
-                Inventory = inventory,
-                Index = inventory.items.Count
-            };
-            inventory.AddNewItem((int)customItem.DefaultItemId, 0);
-            customItem.Durability = Items.DefaultDurability;
+                return Create(inventory.gameObject.transform.position, inventory.gameObject.transform.rotation);
+            }
+            else
+            {
+                TItem customItem = new TItem
+                {
+                    PsuedoType = PsuedoId,
+                    UniqueId = Items.ids.NewId(),
+                    
+                    durability = Items.DefaultDurability,
+                    Player = inventory.gameObject,
+                    Inventory = inventory,
+                    Index = inventory.items.Count
+                };
+                inventory.AddNewItem((int)customItem.DefaultItemId, 0);
+                customItem.ApplyInventory();
 
-            RegisterEvents(customItem);
-            customItem.OnInitialize();
+                RegisterEvents(customItem);
+                customItem.OnInitialize();
 
-            return customItem;
+                return customItem;
+            }
         }
 
         public override CustomItem Create(Pickup pickup)
@@ -102,7 +110,7 @@ namespace ItemManager.Utilities
                 Pickup = pickup
             };
             customItem.ApplyPickup();
-            customItem.SetItemType(customItem.DefaultItemId);
+            customItem.ItemType = customItem.DefaultItemId;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -123,7 +131,7 @@ namespace ItemManager.Utilities
                 Index = index
             };
             customItem.ApplyInventory();
-            customItem.SetItemType(customItem.DefaultItemId);
+            customItem.ItemType = customItem.DefaultItemId;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();

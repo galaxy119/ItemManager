@@ -151,7 +151,7 @@ namespace ItemManager
 
             Timing.NextTick(() => {
                 Pickup drop = GetLostItemTick(inventory, prePickups, preItems, out int dropIndex);
-
+                
                 CustomItem customItem = Items.FindCustomItem(player, dropIndex);
                 Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), dropIndex);
 

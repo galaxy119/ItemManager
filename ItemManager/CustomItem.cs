@@ -220,16 +220,6 @@ namespace ItemManager
         public virtual void OnShoot(GameObject target, ref float damage) { }
         public virtual void OnMedkitUse() { }
 
-        internal void SetItemType(ItemType value)
-        {
-            ItemType = value;
-        }
-
-        internal void SetDurability(float value)
-        {
-            Durability = value;
-        }
-
         internal void ApplyPickup()
         {
             durability = Pickup.info.durability;
@@ -244,18 +234,6 @@ namespace ItemManager
             Inventory.SyncItemInfo info = Inventory.items[Index];
             info.durability = durability;
             Inventory.items[Index] = info;
-        }
-
-        internal void ApplyPickupChangee()
-        {
-            if (Pickup == null)
-            {
-                ApplyInventory();
-            }
-            else
-            {
-                ApplyPickup();
-            }
         }
     }
 }
