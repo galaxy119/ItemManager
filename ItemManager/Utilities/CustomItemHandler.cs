@@ -77,26 +77,24 @@ namespace ItemManager.Utilities
             {
                 return Create(inventory.gameObject.transform.position, inventory.gameObject.transform.rotation);
             }
-            else
+
+            TItem customItem = new TItem
             {
-                TItem customItem = new TItem
-                {
-                    PsuedoType = PsuedoId,
-                    UniqueId = Items.ids.NewId(),
+                PsuedoType = PsuedoId,
+                UniqueId = Items.ids.NewId(),
                     
-                    durability = Items.DefaultDurability,
-                    Player = inventory.gameObject,
-                    Inventory = inventory,
-                    Index = inventory.items.Count
-                };
-                inventory.AddNewItem((int)customItem.DefaultItemId, 0);
-                customItem.ApplyInventory();
+                durability = Items.DefaultDurability,
+                Player = inventory.gameObject,
+                Inventory = inventory,
+                Index = inventory.items.Count
+            };
+            inventory.AddNewItem((int)customItem.DefaultItemId, 0);
+            customItem.ApplyInventory();
 
-                RegisterEvents(customItem);
-                customItem.OnInitialize();
+            RegisterEvents(customItem);
+            customItem.OnInitialize();
 
-                return customItem;
-            }
+            return customItem;
         }
 
         public override CustomItem Create(Pickup pickup)
