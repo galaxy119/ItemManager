@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
-using Smod2.Attributes;
+﻿using Smod2.Attributes;
 using scp4aiur;
 using Smod2.Config;
-using UnityEngine;
 
 namespace ItemManager
 {

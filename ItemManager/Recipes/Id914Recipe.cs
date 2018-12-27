@@ -1,5 +1,6 @@
-﻿using System;
-using Smod2.API;
+﻿using Smod2.API;
+
+using System;
 
 namespace ItemManager.Recipes
 {
@@ -65,17 +66,17 @@ namespace ItemManager.Recipes
                 }
                 else
                 {
-                    Pickup.PickupInfo info = item.Pickup.info;
+                    Pickup.PickupInfo info = item.Dropped.info;
                     info.itemId = OutputId;
                     info.durability = OutputDurability;
-                    item.Pickup.Networkinfo = info;
+                    item.Dropped.Networkinfo = info;
                 }
             }
             else
             {
                 if (Items.registeredItems.ContainsKey(OutputId))
                 {
-                    item = held ? Items.GiveItem(item.Player, OutputId) : Items.CreateItem(OutputId, item.Pickup.transform.position, item.Pickup.transform.rotation);
+                    item = held ? Items.GiveItem(item.PlayerObject, OutputId) : Items.CreateItem(OutputId, item.Dropped.transform.position, item.Dropped.transform.rotation);
                     item.Durability = OutputDurability;
                 }
                 else

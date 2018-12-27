@@ -1,4 +1,5 @@
 ﻿using ItemManager.Events;
+
 using UnityEngine;
 
 namespace ItemManager.Utilities
@@ -24,7 +25,7 @@ namespace ItemManager.Utilities
         /// <summary>
         /// Creates a custom item of this type from the pickup;
         /// </summary>
-        /// <param name="pickup">Pickup to turn into custom item.</param>
+        /// <param name="pickup">Dropped to turn into custom item.</param>
         public abstract CustomItem Create(Pickup pickup);
         /// <summary>
         /// Creates a custom item of this type from an inventory.
@@ -59,7 +60,7 @@ namespace ItemManager.Utilities
                 UniqueId = Items.ids.NewId(),
             };
 
-            customItem.Pickup = Items.hostInventory.SetPickup((int)customItem.DefaultItemId,
+            customItem.Dropped = Items.hostInventory.SetPickup((int)customItem.DefaultItemId,
                 customItem.UniqueId,
                 position,
                 rotation,
@@ -84,7 +85,7 @@ namespace ItemManager.Utilities
                 UniqueId = Items.ids.NewId(),
                     
                 durability = Items.DefaultDurability,
-                Player = inventory.gameObject,
+                PlayerObject = inventory.gameObject,
                 Inventory = inventory,
                 Index = inventory.items.Count
             };
@@ -105,10 +106,10 @@ namespace ItemManager.Utilities
                 UniqueId = Items.ids.NewId(),
 
                 durability = pickup.info.durability,
-                Pickup = pickup
+                Dropped = pickup
             };
             customItem.ApplyPickup();
-            customItem.ItemType = customItem.DefaultItemId;
+            customItem.Type = customItem.DefaultItemId;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -124,12 +125,12 @@ namespace ItemManager.Utilities
                 UniqueId = Items.ids.NewId(),
 
                 durability = inventory.items[index].durability,
-                Player = inventory.gameObject,
+                PlayerObject = inventory.gameObject,
                 Inventory = inventory,
                 Index = index
             };
             customItem.ApplyInventory();
-            customItem.ItemType = customItem.DefaultItemId;
+            customItem.Type = customItem.DefaultItemId;
 
             RegisterEvents(customItem);
             customItem.OnInitialize();

@@ -19,12 +19,12 @@ namespace ItemManager
         /// <summary>
         /// The ID of the item to impersonate.
         /// </summary>
-        public ItemType ItemType
+        public ItemType Type
         {
-            get => Pickup == null ? (ItemType)Inventory.items[Index].id : (ItemType)Pickup.info.itemId;
+            get => Dropped == null ? (ItemType)Inventory.items[Index].id : (ItemType)Dropped.info.itemId;
             set
             {
-                if (Pickup == null)
+                if (Dropped == null)
                 {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
                     info.id = (int)value;
@@ -33,10 +33,10 @@ namespace ItemManager
                 }
                 else
                 {
-                    Pickup.PickupInfo info = Pickup.info;
+                    Pickup.PickupInfo info = Dropped.info;
                     info.itemId = (int)value;
 
-                    Pickup.Networkinfo = info;
+                    Dropped.Networkinfo = info;
                 }
             }
         }
@@ -48,10 +48,10 @@ namespace ItemManager
 
         public int Sight
         {
-            get => Pickup == null ? Inventory.items[Index].modSight : Pickup.info.weaponMods[0];
+            get => Dropped == null ? Inventory.items[Index].modSight : Dropped.info.weaponMods[0];
             set
             {
-                if (Pickup == null)
+                if (Dropped == null)
                 {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
                     info.modSight = value;
@@ -60,20 +60,20 @@ namespace ItemManager
                 }
                 else
                 {
-                    Pickup.PickupInfo info = Pickup.info;
+                    Pickup.PickupInfo info = Dropped.info;
                     info.weaponMods[0] = value;
 
-                    Pickup.Networkinfo = info;
+                    Dropped.Networkinfo = info;
                 }
             }
         }
 
         public int Barrel
         {
-            get => Pickup == null ? Inventory.items[Index].modBarrel : Pickup.info.weaponMods[1];
+            get => Dropped == null ? Inventory.items[Index].modBarrel : Dropped.info.weaponMods[1];
             set
             {
-                if (Pickup == null)
+                if (Dropped == null)
                 {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
                     info.modBarrel = value;
@@ -82,20 +82,20 @@ namespace ItemManager
                 }
                 else
                 {
-                    Pickup.PickupInfo info = Pickup.info;
+                    Pickup.PickupInfo info = Dropped.info;
                     info.weaponMods[1] = value;
 
-                    Pickup.Networkinfo = info;
+                    Dropped.Networkinfo = info;
                 }
             }
         }
 
         public int MiscAttachment
         {
-            get => Pickup == null ? Inventory.items[Index].modOther : Pickup.info.weaponMods[2];
+            get => Dropped == null ? Inventory.items[Index].modOther : Dropped.info.weaponMods[2];
             set
             {
-                if (Pickup == null)
+                if (Dropped == null)
                 {
                     Inventory.SyncItemInfo info = Inventory.items[Index];
                     info.modOther = value;
@@ -104,10 +104,10 @@ namespace ItemManager
                 }
                 else
                 {
-                    Pickup.PickupInfo info = Pickup.info;
+                    Pickup.PickupInfo info = Dropped.info;
                     info.weaponMods[2] = value;
 
-                    Pickup.Networkinfo = info;
+                    Dropped.Networkinfo = info;
                 }
             }
         }
@@ -115,7 +115,7 @@ namespace ItemManager
         /// <summary>
         /// The player (null if none) that is holding this item.
         /// </summary>
-        public GameObject Player { get; internal set; }
+        public GameObject PlayerObject { get; internal set; }
         /// <summary>
         /// The inventory of the player (null if none) that is holding this item.
         /// </summary>
@@ -128,7 +128,7 @@ namespace ItemManager
         /// <summary>
         /// The dropped item entity (null if none).
         /// </summary>
-        public Pickup Pickup { get; internal set; }
+        public Pickup Dropped { get; internal set; }
 
         internal float durability;
         /// <summary>
@@ -138,10 +138,10 @@ namespace ItemManager
         /// </summary>
         public float Durability
         {
-            get => Pickup == null ? Inventory.items[Index].durability : durability;
+            get => Dropped == null ? Inventory.items[Index].durability : durability;
             set
             {
-                if (Pickup == null)
+                if (Dropped == null)
                 {
                     Inventory.SyncItemInfo item = Inventory.items[Index];
                     item.durability = value;
@@ -154,6 +154,38 @@ namespace ItemManager
             }
         }
 
+        public void SetPlayer(GameObject target)
+        {
+            if (target == null)
+            {
+                if (PlayerObject != null)
+                {
+                    durability = Durability;
+                    Vector3 dropPos = PlayerObject.transform.position;
+                    Quaternion dropRot = PlayerObject.transform.rotation;
+
+                    Inventory.items.RemoveAt(Index);
+
+                    PlayerObject = null;
+                    Inventory = null;
+                    Index = -1;
+
+                    Dropped = Items.hostInventory.SetPickup((int)Type, UniqueId, dropPos, dropRot, Sight,
+                        Barrel, MiscAttachment).GetComponent<Pickup>();
+                }
+            }
+            else
+            {
+                if (PlayerObject == null)
+                {
+                    Items.ReinsertItem(Inventory, Inventory.items.Count, Dropped.info);
+                    Dropped.Delete();
+                }
+            }
+        }
+
+        public virtual void OnInitialize() { }
+
         public bool Deleted { get; private set; }
         public void Delete()
         {
@@ -164,14 +196,14 @@ namespace ItemManager
                 Unhook();
             }
 
-            if (Pickup == null)
+            if (Dropped == null)
             {
                 Inventory.items.RemoveAt(Index);
                 Items.CorrectItemIndexes(Items.GetCustomItems(Inventory.gameObject), Index);
             }
             else
             {
-                Pickup.Delete();
+                Dropped.Delete();
             }
 
             OnDelete();
@@ -200,8 +232,6 @@ namespace ItemManager
         }
         public virtual void OnUnhooked() { }
 
-        public virtual void OnInitialize() { }
-
         public virtual bool OnDrop()
         {
             return true;
@@ -217,16 +247,15 @@ namespace ItemManager
 
         public virtual void On914(KnobSetting knob, Vector3 output, bool heldItem) { }
         public virtual void OnRadioSwitch(RadioStatus status) { }
-        public virtual void OnShoot(GameObject target, ref float damage) { }
         public virtual void OnMedkitUse() { }
 
         internal void ApplyPickup()
         {
-            durability = Pickup.info.durability;
+            durability = Dropped.info.durability;
 
-            Pickup.PickupInfo info = Pickup.info;
+            Pickup.PickupInfo info = Dropped.info;
             info.durability = UniqueId;
-            Pickup.Networkinfo = info;
+            Dropped.Networkinfo = info;
         }
 
         internal void ApplyInventory()

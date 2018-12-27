@@ -3,6 +3,7 @@ using Smod2.API;
 
 using ItemManager.Recipes;
 using ItemManager.Utilities;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -172,7 +173,7 @@ namespace ItemManager
         /// <summary>
         /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
         /// </summary>
-        /// <param name="player">Player of the held item to retrieve.</param>
+        /// <param name="player">PlayerObject of the held item to retrieve.</param>
         public static CustomItem HeldCustomItem(this Player player)
         {
             return HeldCustomItem((GameObject)player.GetGameObject());
@@ -181,7 +182,7 @@ namespace ItemManager
         /// <summary>
         /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
         /// </summary>
-        /// <param name="player">Player of the held item to retrieve.</param>
+        /// <param name="player">PlayerObject of the held item to retrieve.</param>
         public static CustomItem HeldCustomItem(GameObject player)
         {
             int heldIndex = player.GetComponent<Inventory>().GetItemIndex();
@@ -192,21 +193,21 @@ namespace ItemManager
         /// <summary>
         /// Finds and returns all custom items within a player's inventory.
         /// </summary>
-        /// <param name="player">Player that should be checked for custom items.</param>
+        /// <param name="player">PlayerObject that should be checked for custom items.</param>
         public static CustomItem[] GetCustomItems(this Player player)
         {
             GameObject unityPlayer = (GameObject)player.GetGameObject();
 
-            return customItems.Values.Where(x => x.Player == unityPlayer).ToArray();
+            return customItems.Values.Where(x => x.PlayerObject == unityPlayer).ToArray();
         }
 
         /// <summary>
         /// Finds and returns all custom items within a player's inventory.
         /// </summary>
-        /// <param name="player">Player that should be checked for custom items.</param>
+        /// <param name="player">PlayerObject that should be checked for custom items.</param>
         public static CustomItem[] GetCustomItems(GameObject player)
         {
-            return customItems.Values.Where(x => x.Player == player).ToArray();
+            return customItems.Values.Where(x => x.PlayerObject == player).ToArray();
         }
 
         /// <summary>
@@ -221,7 +222,7 @@ namespace ItemManager
         /// <summary>
         /// Checks if an item is an instance of a custom item.
         /// </summary>
-        /// <param name="player">Player that is holding the item to check.</param>
+        /// <param name="player">PlayerObject that is holding the item to check.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static bool IsCustomItem(this Player player, int index)
         {
@@ -231,17 +232,17 @@ namespace ItemManager
         /// <summary>
         /// Checks if an item is an instance of a custom item.
         /// </summary>
-        /// <param name="player">Player that is holding the item to check.</param>
+        /// <param name="player">PlayerObject that is holding the item to check.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static bool IsCustomItem(GameObject player, int index)
         {
-            return customItems.Values.Any(x => x.Index == index && x.Player == player);
+            return customItems.Values.Any(x => x.Index == index && x.PlayerObject == player);
         }
 
         /// <summary>
         /// Finds a custom item from a vanilla item. 
         /// </summary>
-        /// <param name="player">Player that is holding the custom item.</param>
+        /// <param name="player">PlayerObject that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static CustomItem FindCustomItem(this Player player, int index)
         {
@@ -251,11 +252,11 @@ namespace ItemManager
         /// <summary>
         /// Finds a custom item from a vanilla item. 
         /// </summary>
-        /// <param name="player">Player that is holding the custom item.</param>
+        /// <param name="player">PlayerObject that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
         public static CustomItem FindCustomItem(GameObject player, int index)
         {
-            return customItems.Values.FirstOrDefault(x => x.Index == index && x.Player == player);
+            return customItems.Values.FirstOrDefault(x => x.Index == index && x.PlayerObject == player);
         }
 
         /// <summary>
@@ -273,6 +274,22 @@ namespace ItemManager
             {
                 item.Index--;
             }
+        }
+
+        internal static Inventory.SyncItemInfo ReinsertItem(Inventory inventory, int index, Pickup.PickupInfo info)
+        {
+            Inventory.SyncItemInfo item = new Inventory.SyncItemInfo
+            {
+                durability = info.durability,
+                id = info.itemId,
+                uniq = ++inventory.itemUniq,
+                modSight = info.weaponMods[0],
+                modBarrel = info.weaponMods[1],
+                modOther = info.weaponMods[2]
+            };
+
+            inventory.items.Insert(index, item);
+            return item;
         }
     }
 }

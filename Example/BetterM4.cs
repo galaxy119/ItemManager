@@ -1,12 +1,19 @@
 ﻿using ItemManager;
+using ItemManager.Events;
 using ItemManager.Recipes;
+
 using Smod2.API;
+
 using UnityEngine;
 
 namespace Example
 {
-    public class BetterM4 : CustomItem
+    public class BetterM4 : CustomItem, IWeapon
     {
+        public float FireRate => 1f;
+        public int MagazineSize => 3;
+        public int CurrentAmmo { get; set; }
+
         public override ItemType DefaultItemId => ItemType.E11_STANDARD_RIFLE;
 
         public BetterM4()
@@ -35,11 +42,9 @@ namespace Example
             return true;
         }
 
-        public override void OnShoot(GameObject target, ref float damage)
+        public void OnShoot(GameObject target, ref float damage)
         {
-            Inventory.SyncItemInfo info = Inventory.items[Index];
-            info.durability += 2;
-            Inventory.items[Index] = info;
+            damage *= 4;
 
             Example.log("Shot super M4.");
         }
@@ -52,7 +57,7 @@ namespace Example
 
         public override void Run(Pickup pickup)
         {
-            Items.ConvertItem(32, pickup);
+            ItemManager.Items.ConvertItem(32, pickup);
         }
     }
 }
