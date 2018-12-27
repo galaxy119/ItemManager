@@ -6,7 +6,8 @@ namespace ItemManager.Events
     {
         float FireRate { get; }
         int MagazineSize { get; }
-        int CurrentAmmo { get; set; }
+        int AmmoInMagazine { get; set; }
+        int TotalAmmo { get; set; }
 
         void OnShoot(GameObject target, ref float damage);
     }

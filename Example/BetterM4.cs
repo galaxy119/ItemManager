@@ -12,7 +12,8 @@ namespace Example
     {
         public float FireRate => 1f;
         public int MagazineSize => 3;
-        public int CurrentAmmo { get; set; }
+        public int AmmoInMagazine { get; set; }
+        public int TotalAmmo { get; set; }
 
         public override ItemType DefaultItemId => ItemType.E11_STANDARD_RIFLE;
 

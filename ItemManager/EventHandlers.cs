@@ -320,12 +320,13 @@ namespace ItemManager
                     return;
                 }
 
-                if (weapon.CurrentAmmo <= 0 && customItem.Durability == manager.weapons[index].maxAmmo)
+                if (weapon.AmmoInMagazine <= 0 && customItem.Durability == manager.weapons[index].maxAmmo)
                 {
-                    weapon.CurrentAmmo = weapon.MagazineSize;
+                    weapon.AmmoInMagazine = Mathf.Min(weapon.MagazineSize, weapon.TotalAmmo);
+                    weapon.TotalAmmo -= weapon.AmmoInMagazine;
                 }
 
-                if (weapon.CurrentAmmo > 0)
+                if (weapon.AmmoInMagazine > 0)
                 {
                     float damage = ev.Damage;
                     weapon.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
@@ -346,7 +347,7 @@ namespace ItemManager
             {
                 CustomItem customItem = ev.Player.HeldCustomItem();
 
-                if (customItem != null && customItem is IWeapon weapon && weapon.CurrentAmmo > 0)
+                if (customItem != null && customItem is IWeapon weapon && weapon.AmmoInMagazine > 0)
                 {
                     WeaponManager manager = customItem.PlayerObject.GetComponent<WeaponManager>();
                     int index = manager.weapons.TakeWhile(x => x.inventoryID != (int)customItem.Type).Count();
@@ -365,7 +366,7 @@ namespace ItemManager
 
         private static void AdjustWeapon(CustomItem item, IWeapon weapon, WeaponManager manager, int index)
         {
-            if (--weapon.CurrentAmmo <= 0)
+            if (--weapon.AmmoInMagazine <= 0)
             {
                 item.Durability = 0;
 
