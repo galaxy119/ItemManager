@@ -53,8 +53,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandHandler.cs" />
-    <Compile Include="Events\IWeapon.cs" />
     <Compile Include="CustomItem.cs" />
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Events\IDoubleDroppable.cs" />
