@@ -17,6 +17,7 @@ namespace ItemManager
         internal static FloatIdManager ids = new FloatIdManager();
 
         internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
+        internal static Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
         internal static Dictionary<int, CustomItemHandler> registeredItems = new Dictionary<int, CustomItemHandler>();
 
         internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
@@ -61,6 +62,11 @@ namespace ItemManager
         /// <param name="id">The ID to register the type to.</param>
         public static void RegisterItem<TItem>(int id) where TItem : CustomItem, new()
         {
+            if (typeof(CustomWeapon).IsAssignableFrom(typeof(TItem)))
+            {
+                customWeaponAmmo.Add(id, new Dictionary<int, int>());
+            }
+
             registeredItems.Add(id, new CustomItemHandler<TItem>(id));
         }
 
@@ -76,6 +82,8 @@ namespace ItemManager
                 {
                     customItems.Remove(uniqId);
                 }
+
+                customWeaponAmmo.Remove(id);
 
                 return true;
             }

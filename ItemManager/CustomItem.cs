@@ -248,6 +248,7 @@ namespace ItemManager
         public virtual void On914(KnobSetting knob, Vector3 output, bool heldItem) { }
         public virtual void OnRadioSwitch(RadioStatus status) { }
         public virtual void OnMedkitUse() { }
+        public virtual void OnShoot(GameObject target, ref float damage) { }
 
         internal void ApplyPickup()
         {

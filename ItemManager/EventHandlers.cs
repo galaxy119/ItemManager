@@ -44,10 +44,10 @@ namespace ItemManager
 
         private static void InvokePickupEvent(CustomItem customItem, GameObject player, Inventory inventory, int index, Inventory.SyncItemInfo item)
         {
-            customItem.Player = player;
+            customItem.PlayerObject = player;
             customItem.Inventory = inventory;
             customItem.Index = index;
-            customItem.Pickup = null;
+            customItem.Dropped = null;
 
             customItem.ApplyInventory();
 
@@ -55,10 +55,10 @@ namespace ItemManager
             {
                 inventory.items.RemoveAt(index);
 
-                customItem.Player = null;
+                customItem.PlayerObject = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
-                customItem.Pickup = Items.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
+                customItem.Dropped = Items.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
                     player.transform.rotation, item.modSight, item.modBarrel, item.modOther).GetComponent<Pickup>();
 
                 customItem.ApplyPickup();
@@ -68,21 +68,21 @@ namespace ItemManager
         private static void BaseInvokeDropEvent(CustomItem customItem, Inventory inventory, int index,
             Pickup drop, Func<bool> result)
         {
-            customItem.Pickup = drop;
+            customItem.Dropped = drop;
 
             customItem.ApplyPickup();
 
             if (!result())
             {
                 ReinsertItem(inventory, index, drop.info);
-                customItem.Pickup = null;
+                customItem.Dropped = null;
                 drop.Delete();
 
                 customItem.ApplyInventory();
             }
             else
             {
-                customItem.Player = null;
+                customItem.PlayerObject = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
             }
@@ -100,20 +100,20 @@ namespace ItemManager
 
         private static void InvokeDeathDropEvent(CustomItem customItem, Pickup drop, GameObject attacker, DamageType damage)
         {
-            customItem.Pickup = drop;
+            customItem.Dropped = drop;
 
             customItem.ApplyPickup();
 
             if (!customItem.OnDeathDrop(attacker, damage))
             {
-                customItem.Pickup = null;
+                customItem.Dropped = null;
 
                 drop.Delete();
                 customItem.Unhook();
             }
             else
             {
-                customItem.Player = null;
+                customItem.PlayerObject = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
             }
@@ -228,7 +228,7 @@ namespace ItemManager
                     Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, false))
                         .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
-                    item.Pickup = Items.hostInventory.SetPickup((int)item.ItemType, pickup.info.durability,
+                    item.Dropped = Items.hostInventory.SetPickup((int)item.Type, pickup.info.durability,
                         pickup.info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
                         pickup.info.rotation, item.Sight, item.Barrel, item.MiscAttachment).GetComponent<Pickup>();
                     pickup.Delete();
@@ -239,7 +239,7 @@ namespace ItemManager
                     }
                     else
                     {
-                        item.On914(ev.KnobSetting, item.Pickup.transform.position, false);
+                        item.On914(ev.KnobSetting, item.Dropped.transform.position, false);
                     }
                 }
                 else
@@ -315,7 +315,7 @@ namespace ItemManager
                                 }
                                 else
                                 {
-                                    item.On914(ev.KnobSetting, item.Player.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
+                                    item.On914(ev.KnobSetting, item.PlayerObject.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
                                 }
                             }
                         }
@@ -450,7 +450,7 @@ namespace ItemManager
 
             if (items.Count > 0)
             {
-                Dictionary<CustomItem, ItemType> itemTypes = items.ToDictionary(x => x, x => x.ItemType);
+                Dictionary<CustomItem, ItemType> itemTypes = items.ToDictionary(x => x, x => x.Type);
                 Vector3 deathPosition = ((GameObject)ev.Player.GetGameObject()).transform.position;
                 Pickup[] prePickups = Object.FindObjectsOfType<Pickup>();
 

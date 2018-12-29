@@ -1,5 +1,4 @@
 ﻿using ItemManager;
-using ItemManager.Events;
 using ItemManager.Recipes;
 
 using Smod2.API;
@@ -8,18 +7,18 @@ using UnityEngine;
 
 namespace Example
 {
-    public class BetterM4 : CustomItem, IWeapon
+    public class BetterM4 : CustomWeapon
     {
-        public float FireRate => 1f;
-        public int MagazineSize => 3;
-        public int AmmoInMagazine { get; set; }
-        public int TotalAmmo { get; set; }
-
         public override ItemType DefaultItemId => ItemType.E11_STANDARD_RIFLE;
+
+        public override int DefaultReserveAmmo => 9;
+        public override int MagazineCapacity => 4;
+        public override float FireRate => 1.5f;
 
         public BetterM4()
         {
             Example.log("Created super M4.");
+            MagazineAmmo = MagazineCapacity;
         }
 
         public override bool OnPickup()
@@ -43,7 +42,7 @@ namespace Example
             return true;
         }
 
-        public void OnShoot(GameObject target, ref float damage)
+        protected override void OnValidShoot(GameObject target, ref float damage)
         {
             damage *= 4;
 
