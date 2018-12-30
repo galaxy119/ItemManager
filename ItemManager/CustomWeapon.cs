@@ -1,18 +1,14 @@
 ﻿using RemoteAdmin;
 using scp4aiur;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ItemManager
 {
     public abstract class CustomWeapon : CustomItem
     {
+        private readonly WeaponManager manager;
+
         private int playerId;
-        private WeaponManager manager;
         private int WeaponManagerIndex
         {
             get
@@ -38,7 +34,7 @@ namespace ItemManager
 
         public abstract float FireRate { get; }
 
-        public CustomWeapon()
+        protected CustomWeapon()
         {
             manager = GameObject.Find("Host").GetComponent<WeaponManager>();
         }
