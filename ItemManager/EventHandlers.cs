@@ -18,13 +18,6 @@ namespace ItemManager
 {
     public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch
     {
-        private readonly List<float> justShot;
-
-        public EventHandlers()
-        {
-            justShot = new List<float>();
-        }
-
         public void OnRoundStart(RoundStartEvent ev)
         {
             Plugin.heldItems = Plugin.instance.GetConfigInt("itemmanager_helditems");
@@ -329,10 +322,8 @@ namespace ItemManager
         {
             CustomItem customItem = ev.Attacker?.HeldCustomItem();
 
-            if (customItem != null && justShot.Contains(customItem.UniqueId))
+            if (customItem != null)
             {
-                justShot.Remove(customItem.UniqueId);
-
                 float damage = ev.Damage;
                 customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
                 ev.Damage = damage;
@@ -347,18 +338,8 @@ namespace ItemManager
 
                 if (customItem != null)
                 {
-                    justShot.Add(customItem.UniqueId);
-
-                    Timing.Next(() =>
-                    {
-                        if (justShot.Contains(customItem.UniqueId))
-                        {
-                            justShot.Remove(customItem.UniqueId);
-
-                            float damage = 0;
-                            customItem.OnShoot(null, ref damage);
-                        }
-                    });
+                    float damage = 0;
+                    customItem.OnShoot(null, ref damage);
                 }
             }
         }
