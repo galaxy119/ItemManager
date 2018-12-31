@@ -28,6 +28,7 @@ namespace ItemManager
         public void OnRoundStart(RoundStartEvent ev)
         {
             Plugin.heldItems = Plugin.instance.GetConfigInt("itemmanager_helditems");
+            Plugin.giveRanks = Plugin.instance.GetConfigList("itemmanager_give_ranks");
 
             Items.scp = Object.FindObjectOfType<Scp914>();
             Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();

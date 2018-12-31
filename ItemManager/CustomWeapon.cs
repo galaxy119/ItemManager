@@ -24,7 +24,7 @@ namespace ItemManager
                 return -1;
             }
         }
-        private float DurabilityThisShot => (Durability + 1) / MagazineAmmo;
+        private float DurabilityThisShot => (float)manager.weapons[WeaponManagerIndex].maxAmmo / MagazineCapacity;
 
         public int ReserveAmmo { get; protected set; }
         public abstract int DefaultReserveAmmo { get; }
@@ -37,6 +37,11 @@ namespace ItemManager
         protected CustomWeapon()
         {
             manager = GameObject.Find("Host").GetComponent<WeaponManager>();
+        }
+
+        public override void OnInitialize()
+        {
+            ReserveAmmo = DefaultReserveAmmo;
         }
 
         public override void OnShoot(GameObject target, ref float damage)
@@ -52,15 +57,13 @@ namespace ItemManager
 
             if (--MagazineAmmo > 0)
             {
-                float curDurability = Durability + 1 - DurabilityThisShot;
-
                 if (FireRate > 0)
                 {
-                    Timing.In(x => Durability = curDurability, FireRate);
+                    Timing.In(x => Durability = MagazineAmmo, FireRate);
                 }
                 else
                 {
-                    Durability = curDurability;
+                    Durability = MagazineAmmo;
                 }
             }
             else
@@ -76,6 +79,7 @@ namespace ItemManager
                     // Reload managed weapon and get ready
                     MagazineAmmo = Mathf.Min(ReserveAmmo, MagazineCapacity);
                     ReserveAmmo -= MagazineAmmo;
+                    Items.customWeaponAmmo[PsuedoType][playerId] = ReserveAmmo;
                 }
                 else
                 {
