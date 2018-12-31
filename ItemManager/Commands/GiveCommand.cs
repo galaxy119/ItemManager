@@ -4,9 +4,9 @@ using Smod2.API;
 using Smod2.Commands;
 using UnityEngine;
 
-namespace ItemManager
+namespace ItemManager.Commands
 {
-    public class CommandHandler : ICommandHandler
+    public class GiveCommand : ICommandHandler
     {
         public string[] OnCall(ICommandSender sender, string[] args)
         {

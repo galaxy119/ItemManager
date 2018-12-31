@@ -1,4 +1,5 @@
-﻿using Smod2.Attributes;
+﻿using ItemManager.Commands;
+using Smod2.Attributes;
 using scp4aiur;
 using Smod2.Config;
 
@@ -32,7 +33,7 @@ namespace ItemManager
 
             Timing.Init(this);
             AddEventHandlers(new EventHandlers());
-            AddCommand("imgive", new CommandHandler());
+            AddCommand("imgive", new GiveCommand());
         }
 
         public override void OnEnable()

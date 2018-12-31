@@ -4,40 +4,40 @@ using UnityEngine;
 
 namespace ItemManager.Utilities
 {
-    internal abstract class CustomItemHandler
+    internal interface ICustomItemHandler
     {
         /// <summary>
         /// The item ID to use when handling 914.
         /// </summary>
-        public abstract int PsuedoId { get; }
+        int PsuedoId { get; }
 
         /// <summary>
         /// Creates a custom item of this type at a location and rotation.
         /// </summary>
         /// <param name="position">Position of the custom item.</param>
         /// <param name="rotation">Rotation of the custom item.</param>
-        public abstract CustomItem Create(Vector3 position, Quaternion rotation);
+        CustomItem Create(Vector3 position, Quaternion rotation);
         /// <summary>
         /// Creates a custom item of this type and adds it to an inventory.
         /// </summary>
         /// <param name="inventory">Inventory of the player to create the item for.</param>
-        public abstract CustomItem Create(Inventory inventory);
+        CustomItem Create(Inventory inventory);
         /// <summary>
         /// Creates a custom item of this type from the pickup;
         /// </summary>
         /// <param name="pickup">Dropped to turn into custom item.</param>
-        public abstract CustomItem Create(Pickup pickup);
+        CustomItem Create(Pickup pickup);
         /// <summary>
         /// Creates a custom item of this type from an inventory.
         /// </summary>
         /// <param name="inventory">Inventory of the player to create the item from.</param>
         /// <param name="index">Index of the item in the inventory.</param>
-        public abstract CustomItem Create(Inventory inventory, int index);
+        CustomItem Create(Inventory inventory, int index);
     }
 
-    internal class CustomItemHandler<TItem> : CustomItemHandler where TItem : CustomItem, new()
+    internal class CustomItemHandler<TItem> : ICustomItemHandler where TItem : CustomItem, new()
     {
-        public override int PsuedoId { get; }
+        public int PsuedoId { get; }
 
         public CustomItemHandler(int psuedoId)
         {
@@ -52,7 +52,7 @@ namespace ItemManager.Utilities
             }
         }
 
-        public override CustomItem Create(Vector3 position, Quaternion rotation)
+        public CustomItem Create(Vector3 position, Quaternion rotation)
         {
             TItem customItem = new TItem
             {
@@ -72,7 +72,7 @@ namespace ItemManager.Utilities
             return customItem;
         }
 
-        public override CustomItem Create(Inventory inventory)
+        public CustomItem Create(Inventory inventory)
         {
             if (inventory.items.Count > 8)
             {
@@ -98,7 +98,7 @@ namespace ItemManager.Utilities
             return customItem;
         }
 
-        public override CustomItem Create(Pickup pickup)
+        public CustomItem Create(Pickup pickup)
         {
             TItem customItem = new TItem
             {
@@ -117,7 +117,7 @@ namespace ItemManager.Utilities
             return customItem;
         }
 
-        public override CustomItem Create(Inventory inventory, int index)
+        public CustomItem Create(Inventory inventory, int index)
         {
             TItem customItem = new TItem
             {

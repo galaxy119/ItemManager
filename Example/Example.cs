@@ -24,7 +24,7 @@ namespace Example
             Items.RegisterItem<BetterMedkit>(31);
             Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
 
-            Items.RegisterItem<BetterM4>(32);
+            Items.RegisterWeapon<BetterM4>(32, 9999);
             Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));
 
             log = Info;

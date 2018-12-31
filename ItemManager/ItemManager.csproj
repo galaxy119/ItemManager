@@ -53,7 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandHandler.cs" />
+    <Compile Include="Commands\GiveCommand.cs" />
     <Compile Include="CustomItem.cs" />
     <Compile Include="CustomWeapon.cs" />
     <Compile Include="EventHandlers.cs" />
@@ -65,6 +65,7 @@
     <Compile Include="Recipes\Custom914Recipe.cs" />
     <Compile Include="Recipes\Id914Recipe.cs" />
     <Compile Include="Utilities\CustomItemHandler.cs" />
+    <Compile Include="Utilities\CustomWeaponHandler.cs" />
     <Compile Include="Utilities\FloatIdManager.cs" />
     <Compile Include="Utilities\Timing.cs" />
   </ItemGroup>

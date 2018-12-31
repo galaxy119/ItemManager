@@ -10,15 +10,13 @@ namespace Example
     public class BetterM4 : CustomWeapon
     {
         public override ItemType DefaultItemId => ItemType.E11_STANDARD_RIFLE;
-
-        public override int DefaultReserveAmmo => 9;
+        
         public override int MagazineCapacity => 4;
         public override float FireRate => 1.5f;
 
         public BetterM4()
         {
             Example.log("Created super M4.");
-            MagazineAmmo = MagazineCapacity;
         }
 
         public override bool OnPickup()

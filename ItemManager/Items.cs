@@ -16,9 +16,11 @@ namespace ItemManager
         internal static Scp914 scp;
         internal static FloatIdManager ids = new FloatIdManager();
 
+        internal static Dictionary<int, ICustomItemHandler> registeredItems = new Dictionary<int, ICustomItemHandler>();
+        internal static Dictionary<int, ICustomWeaponHandler> registeredWeapons = new Dictionary<int, ICustomWeaponHandler>();
+
         internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
         internal static Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
-        internal static Dictionary<int, CustomItemHandler> registeredItems = new Dictionary<int, CustomItemHandler>();
 
         internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
         internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
@@ -64,10 +66,25 @@ namespace ItemManager
         {
             if (typeof(CustomWeapon).IsAssignableFrom(typeof(TItem)))
             {
-                customWeaponAmmo.Add(id, new Dictionary<int, int>());
+                throw new InvalidOperationException("Weapons cannot be registered as a custom item. See \"Items.RegisterWeapon\".");
             }
 
             registeredItems.Add(id, new CustomItemHandler<TItem>(id));
+        }
+
+        /// <summary>
+        /// Registers a custom item to an ID.
+        /// </summary>
+        /// <typeparam name="TWeapon">The type (which inherits CustomWeapon) to register.</typeparam>
+        /// <param name="id">The ID to register the type to.</param>
+        /// <param name="defaultReserveAmmo">The amount of ammo of this item type to give a player when they first spawn.</param>
+        public static void RegisterWeapon<TWeapon>(int id, int defaultReserveAmmo) where TWeapon : CustomWeapon, new()
+        {
+            customWeaponAmmo.Add(id, new Dictionary<int, int>());
+
+            ICustomWeaponHandler handler = new CustomWeaponHandler<TWeapon>(id, defaultReserveAmmo);
+            registeredItems.Add(id, handler);
+            registeredWeapons.Add(id, handler);
         }
 
         /// <summary>
@@ -76,7 +93,19 @@ namespace ItemManager
         /// <param name="id">ID of the registered item to remove.</param>
         public static bool UnregisterItem(int id)
         {
+            bool success = false;
+
             if (registeredItems.Remove(id))
+            {
+                foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key))
+                {
+                    customItems.Remove(uniqId);
+                }
+
+                success = true;
+            }
+
+            if (registeredWeapons.Remove(id))
             {
                 foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key))
                 {
@@ -85,10 +114,10 @@ namespace ItemManager
 
                 customWeaponAmmo.Remove(id);
 
-                return true;
+                success = true;
             }
 
-            return false;
+            return success;
         }
 
         /// <summary>

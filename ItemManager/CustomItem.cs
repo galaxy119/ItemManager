@@ -7,6 +7,8 @@ namespace ItemManager
 {
     public abstract class CustomItem
     {
+        internal bool justShot;
+
         /// <summary>
         /// The durability of the item in the pickup state, used for ID purposes.
         /// </summary>

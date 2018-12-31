@@ -24,10 +24,8 @@ namespace ItemManager
                 return -1;
             }
         }
-        private float DurabilityThisShot => (float)manager.weapons[WeaponManagerIndex].maxAmmo / MagazineCapacity;
 
         public int ReserveAmmo { get; protected set; }
-        public abstract int DefaultReserveAmmo { get; }
 
         public int MagazineAmmo { get; protected set; }
         public abstract int MagazineCapacity { get; }
@@ -41,7 +39,7 @@ namespace ItemManager
 
         public override void OnInitialize()
         {
-            ReserveAmmo = DefaultReserveAmmo;
+            Durability = MagazineCapacity;
         }
 
         public override void OnShoot(GameObject target, ref float damage)
@@ -51,6 +49,12 @@ namespace ItemManager
                 Durability++;
                 damage = 0;
                 return;
+            }
+
+            // Player just reloaded
+            if (Durability + 1 == manager.weapons[WeaponManagerIndex].maxAmmo)
+            {
+                MagazineAmmo = MagazineCapacity;
             }
 
             Durability = 0;
@@ -76,9 +80,8 @@ namespace ItemManager
 
                 if (ReserveAmmo > 0)
                 {
-                    // Reload managed weapon and get ready
-                    MagazineAmmo = Mathf.Min(ReserveAmmo, MagazineCapacity);
-                    ReserveAmmo -= MagazineAmmo;
+                    // Remove mag ammo
+                    ReserveAmmo -= Mathf.Min(ReserveAmmo, MagazineCapacity);
                     Items.customWeaponAmmo[PsuedoType][playerId] = ReserveAmmo;
                 }
                 else
@@ -101,11 +104,6 @@ namespace ItemManager
             }
 
             playerId = PlayerObject.GetComponent<QueryProcessor>().PlayerId;
-
-            if (!Items.customWeaponAmmo[PsuedoType].ContainsKey(playerId))
-            {
-                Items.customWeaponAmmo[PsuedoType].Add(playerId, DefaultReserveAmmo);
-            }
             ReserveAmmo = Items.customWeaponAmmo[PsuedoType][playerId];
 
             return true;

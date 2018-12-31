@@ -16,7 +16,9 @@ using Random = UnityEngine.Random;
 
 namespace ItemManager
 {
-    public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch
+    public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, 
+        IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, 
+        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn
     {
         public void OnRoundStart(RoundStartEvent ev)
         {
@@ -322,11 +324,15 @@ namespace ItemManager
         {
             CustomItem customItem = ev.Attacker?.HeldCustomItem();
 
-            if (customItem != null)
+            if (customItem != null && !customItem.justShot)
             {
+                customItem.justShot = true;
+
                 float damage = ev.Damage;
                 customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
                 ev.Damage = damage;
+
+                customItem.justShot = false;
             }
         }
 
@@ -462,6 +468,21 @@ namespace ItemManager
             foreach (CustomItem customItem in ev.Player.GetCustomItems())
             {
                 customItem.OnRadioSwitch(ev.ChangeTo);
+            }
+        }
+
+        public void OnSpawn(PlayerSpawnEvent ev)
+        {
+            foreach (int id in Items.customWeaponAmmo.Keys)
+            {
+                if (Items.customWeaponAmmo[id].ContainsKey(ev.Player.PlayerId))
+                {
+                    Items.customWeaponAmmo[id][ev.Player.PlayerId] = Items.registeredWeapons[id].DefaultReserveAmmo;
+                }
+                else
+                {
+                    Items.customWeaponAmmo[id].Add(ev.Player.PlayerId, Items.registeredWeapons[id].DefaultReserveAmmo);
+                }
             }
         }
     }
