@@ -10,6 +10,7 @@ using ItemManager.Recipes;
 using ItemManager.Events;
 
 using System.Linq;
+using RemoteAdmin;
 using Smod2.API;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -21,6 +22,13 @@ namespace ItemManager
         IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, 
         IEventHandlerWaitingForPlayers
     {
+        private readonly List<CustomItem> waitingForShot;
+
+        public EventHandlers()
+        {
+            waitingForShot = new List<CustomItem>();
+        }
+
         public void OnWaitingForPlayers(WaitingForPlayersEvent ev)
         {
             Plugin.heldItems = Plugin.instance.GetConfigInt("im_helditems");
@@ -350,24 +358,46 @@ namespace ItemManager
 
                 if (customItem != null && !customItem.justShot)
                 {
-                    customItem.justShot = true;
+                    waitingForShot.Add(customItem);
 
-                    float damage = ev.Damage;
-                    customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
-                    ev.Damage = damage;
+                    Timing.Next(() =>
+                    {
+                        if (waitingForShot.Contains(customItem))
+                        {
+                            waitingForShot.Remove(customItem);
+                            return;
+                        }
 
-                    customItem.justShot = false;
+                        customItem.justShot = true;
+
+                        float damage = ev.Damage;
+                        customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
+                        GameObject target = (GameObject) ev.Player.GetGameObject();
+                        target.GetComponent<PlayerStats>().HurtPlayer(new PlayerStats.HitInfo(
+                            damage - ev.Damage - 1,
+                            customItem.PlayerObject.GetComponent<NicknameSync>().myNick + " (" +
+                            customItem.PlayerObject.GetComponent<CharacterClassManager>().SteamId + ")",
+                            DamageTypes.FromIndex((int) ev.DamageType),
+                            customItem.PlayerObject.GetComponent<QueryProcessor>().PlayerId
+                        ), target);
+
+                        customItem.justShot = false;
+                    });
                 }
             }
         }
 
         public void OnShoot(PlayerShootEvent ev)
         {
-            if (ev.Target == null && ev.Player != null)
-            {
-                CustomItem customItem = ev.Player.HeldCustomItem();
+            CustomItem customItem = ev.Player?.HeldCustomItem();
 
-                if (customItem != null)
+            if (customItem != null)
+            {
+                if (waitingForShot.Contains(customItem))
+                {
+                    waitingForShot.Remove(customItem);
+                }
+                else
                 {
                     float damage = 0;
                     customItem.OnShoot(null, ref damage);
