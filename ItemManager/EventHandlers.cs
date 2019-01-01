@@ -340,17 +340,20 @@ namespace ItemManager
 
         public void OnPlayerHurt(PlayerHurtEvent ev)
         {
-            CustomItem customItem = ev.Attacker?.HeldCustomItem();
-
-            if (customItem != null && !customItem.justShot)
+            if (ev.Attacker.PlayerId != ev.Player.PlayerId)
             {
-                customItem.justShot = true;
+                CustomItem customItem = ev.Attacker?.HeldCustomItem();
 
-                float damage = ev.Damage;
-                customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
-                ev.Damage = damage;
+                if (customItem != null && !customItem.justShot)
+                {
+                    customItem.justShot = true;
 
-                customItem.justShot = false;
+                    float damage = ev.Damage;
+                    customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
+                    ev.Damage = damage;
+
+                    customItem.justShot = false;
+                }
             }
         }
 
