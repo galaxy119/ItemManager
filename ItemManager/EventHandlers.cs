@@ -18,15 +18,33 @@ namespace ItemManager
 {
     public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, 
         IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, 
-        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn
+        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, IEventHandlerWaitingForPlayers
     {
+        public void OnWaitingForPlayers(WaitingForPlayersEvent ev)
+        {
+            Plugin.heldItems = Plugin.instance.GetConfigInt("im_helditems");
+            Plugin.giveRanks = Plugin.instance.GetConfigList("im_give_ranks");
+        }
+
         public void OnRoundStart(RoundStartEvent ev)
         {
-            Plugin.heldItems = Plugin.instance.GetConfigInt("itemmanager_helditems");
-            Plugin.giveRanks = Plugin.instance.GetConfigList("itemmanager_give_ranks");
-
             Items.scp = Object.FindObjectOfType<Scp914>();
             Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
+        }
+
+        public void OnSpawn(PlayerSpawnEvent ev)
+        {
+            foreach (int id in Items.customWeaponAmmo.Keys)
+            {
+                if (Items.customWeaponAmmo[id].ContainsKey(ev.Player.PlayerId))
+                {
+                    Items.customWeaponAmmo[id][ev.Player.PlayerId] = Items.registeredWeapons[id].DefaultReserveAmmo;
+                }
+                else
+                {
+                    Items.customWeaponAmmo[id].Add(ev.Player.PlayerId, Items.registeredWeapons[id].DefaultReserveAmmo);
+                }
+            }
         }
 
         public void OnRoundRestart(RoundRestartEvent ev)
@@ -468,21 +486,6 @@ namespace ItemManager
             foreach (CustomItem customItem in ev.Player.GetCustomItems())
             {
                 customItem.OnRadioSwitch(ev.ChangeTo);
-            }
-        }
-
-        public void OnSpawn(PlayerSpawnEvent ev)
-        {
-            foreach (int id in Items.customWeaponAmmo.Keys)
-            {
-                if (Items.customWeaponAmmo[id].ContainsKey(ev.Player.PlayerId))
-                {
-                    Items.customWeaponAmmo[id][ev.Player.PlayerId] = Items.registeredWeapons[id].DefaultReserveAmmo;
-                }
-                else
-                {
-                    Items.customWeaponAmmo[id].Add(ev.Player.PlayerId, Items.registeredWeapons[id].DefaultReserveAmmo);
-                }
             }
         }
     }

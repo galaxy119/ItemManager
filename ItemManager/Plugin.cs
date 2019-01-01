@@ -23,8 +23,8 @@ namespace ItemManager
         {
             instance = this;
 
-            AddConfig(new ConfigSetting("itemmanager_helditems", 3, SettingType.NUMERIC, true, "Whether or not ItemManager will take held items into account in 914. 0 for none, 1 for only custom items, 2 for only normal items, 3 for all items."));
-            AddConfig(new ConfigSetting("itemmanager_give_ranks", new[]
+            AddConfig(new ConfigSetting("im_helditems", 3, SettingType.NUMERIC, true, "Whether or not ItemManager will take held items into account in 914. 0 for none, 1 for only custom items, 2 for only normal items, 3 for all items."));
+            AddConfig(new ConfigSetting("im_give_ranks", new[]
             {
                 "owner",
                 "admin"
