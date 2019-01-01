@@ -18,7 +18,8 @@ namespace ItemManager
 {
     public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, 
         IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, 
-        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, IEventHandlerWaitingForPlayers
+        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, 
+        IEventHandlerWaitingForPlayers
     {
         public void OnWaitingForPlayers(WaitingForPlayersEvent ev)
         {
@@ -139,7 +140,10 @@ namespace ItemManager
             {
                 durability = info.durability,
                 id = info.itemId,
-                uniq = ++inventory.itemUniq
+                uniq = ++inventory.itemUniq,
+                modSight = info.weaponMods[0],
+                modBarrel = info.weaponMods[1],
+                modOther = info.weaponMods[2]
             };
 
             inventory.items.Insert(index, item);
