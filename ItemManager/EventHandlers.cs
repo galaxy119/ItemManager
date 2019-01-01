@@ -455,9 +455,9 @@ namespace ItemManager
 
         public void OnPlayerDie(PlayerDeathEvent ev)
         {
-            List<CustomItem> items = ev.Player.GetCustomItems().ToList();
+            CustomItem[] items = ev.Player.GetCustomItems();
 
-            if (items.Count > 0)
+            if (items.Length > 0)
             {
                 Dictionary<CustomItem, ItemType> itemTypes = items.ToDictionary(x => x, x => x.Type);
                 Vector3 deathPosition = ((GameObject)ev.Player.GetGameObject()).transform.position;
@@ -465,8 +465,8 @@ namespace ItemManager
 
                 Timing.Next(() => {
                     Pickup[] postPickups = Object.FindObjectsOfType<Pickup>();
-                    Pickup[] pickupsThisTick = postPickups.Except(prePickups).ToArray();
-                    Pickup[] deathPickups = pickupsThisTick
+                    Pickup[] deathPickups = postPickups
+                        .Except(prePickups)
                         .Where(x => Vector3.Distance(deathPosition, x.transform.position) < 10).ToArray();
 
                     foreach (Pickup pickup in deathPickups)
@@ -475,7 +475,7 @@ namespace ItemManager
 
                         if (customItemOfType != null)
                         {
-                            items.Remove(customItemOfType);
+                            itemTypes.Remove(customItemOfType);
 
                             InvokeDeathDropEvent(customItemOfType, pickup, (GameObject)ev.Killer.GetGameObject(), ev.DamageTypeVar);
                         }
