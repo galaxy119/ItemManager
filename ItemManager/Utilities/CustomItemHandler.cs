@@ -58,6 +58,9 @@ namespace ItemManager.Utilities
             {
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
+
+                durability = 0,
+                Index = -1
             };
 
             customItem.Dropped = Items.hostInventory.SetPickup((int)customItem.DefaultItemId,
@@ -65,6 +68,7 @@ namespace ItemManager.Utilities
                 position,
                 rotation,
                 0, 0, 0).GetComponent<Pickup>();
+            customItem.ApplyPickup();
 
             RegisterEvents(customItem);
             customItem.OnInitialize();
@@ -84,7 +88,7 @@ namespace ItemManager.Utilities
                 PsuedoType = PsuedoId,
                 UniqueId = Items.ids.NewId(),
                     
-                durability = Items.DefaultDurability,
+                durability = 0,
                 PlayerObject = inventory.gameObject,
                 Inventory = inventory,
                 Index = inventory.items.Count
@@ -106,7 +110,8 @@ namespace ItemManager.Utilities
                 UniqueId = Items.ids.NewId(),
 
                 durability = pickup.info.durability,
-                Dropped = pickup
+                Dropped = pickup,
+                Index = -1
             };
             customItem.ApplyPickup();
             customItem.Type = customItem.DefaultItemId;

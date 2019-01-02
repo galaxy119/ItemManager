@@ -203,7 +203,7 @@ namespace ItemManager
                     case null:
                         return;
 
-                    case IDoubleDroppable doubleDroppable when doubleDroppable.DoubleDropWindow != 0:
+                    case IDoubleDroppable doubleDroppable when doubleDroppable.DoubleDropWindow > 0:
                     {
                         if (Items.readyForDoubleDrop[customItem.UniqueId])
                         {
@@ -220,7 +220,8 @@ namespace ItemManager
                             Items.readyForDoubleDrop[customItem.UniqueId] = true;
 
                             Items.doubleDropTimers.Remove(customItem.UniqueId);
-                            Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy => {
+                            Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy => 
+                            {
                                 Items.readyForDoubleDrop[customItem.UniqueId] = false;
                                 inventory.items.Remove(doubleDropDummy); //remove dummy from inventory
                                 drop = Items.hostInventory //create item in world
@@ -471,6 +472,8 @@ namespace ItemManager
                 return null;
             }
 
+            Pickup postPickup = postPickups.Length - prePickups.Length > 1 ? postPickups.Except(prePickups).OrderBy(x => Vector3.Distance(inventory.transform.position, x.transform.position)).First() : postPickups[0];
+
             int[] postItems = inventory.items.Select(x => x.uniq).ToArray();
 
             index = postItems.Length;
@@ -484,7 +487,7 @@ namespace ItemManager
                 }
             }
 
-            return postPickups.Except(prePickups).First();
+            return postPickup;
         }
 
         public void OnPlayerDie(PlayerDeathEvent ev)
