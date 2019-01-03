@@ -224,8 +224,11 @@ namespace ItemManager
 
             if (this is IDoubleDroppable)
             { //if double droppable
-                Timing.Remove(Items.doubleDropTimers[UniqueId]);
-                Items.doubleDropTimers.Remove(UniqueId);
+                if (Items.doubleDropTimers.ContainsKey(UniqueId))
+                {
+                    Timing.Remove(Items.doubleDropTimers[UniqueId]);
+                    Items.doubleDropTimers.Remove(UniqueId);
+                }
 
                 Items.readyForDoubleDrop.Remove(UniqueId);
             }
