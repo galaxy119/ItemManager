@@ -22,11 +22,18 @@ namespace Example
 
         public override void Register()
         {
-            CustomWeaponHandler<BetterMedkit> betterMedkit = new CustomWeaponHandler<BetterMedkit>(31);
+            CustomItemHandler<BetterMedkit> betterMedkit = new CustomItemHandler<BetterMedkit>(31)
+            {
+                DefaultType = ItemType.MEDKIT
+            };
             betterMedkit.Register();
             Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.MEDKIT, 31));
 
-            CustomWeaponHandler<BetterM4> betterM4 = new CustomWeaponHandler<BetterM4>(32);
+            CustomWeaponHandler<BetterM4> betterM4 = new CustomWeaponHandler<BetterM4>(32)
+            {
+                DefaultType = ItemType.E11_STANDARD_RIFLE,
+                DefaultReserveAmmo = 10
+            };
             betterM4.Register();
             Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));
 

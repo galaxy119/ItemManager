@@ -153,6 +153,9 @@ namespace ItemManager
 
         private void RegisterEvents()
         {
+            UniqueId = Items.ids.NewId();
+            Items.customItems.Add(UniqueId, this);
+
             if (this is IDoubleDroppable)
             {
                 Items.doubleDropTimers.Add(UniqueId, int.MinValue);

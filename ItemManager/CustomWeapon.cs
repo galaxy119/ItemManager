@@ -62,19 +62,10 @@ namespace ItemManager
             prevDurability = Durability;
         }
 
-        private void AddAmmo(int amount)
-        {
-            AmmoBox ammo = PlayerObject.GetComponent<AmmoBox>();
-            WeaponManager.Weapon weapon = manager.weapons[WeaponManagerIndex];
-
-            // Give player enough ammo for a reload
-            ammo.SetOneAmount(weapon.ammoType, (ammo.GetAmmo(weapon.ammoType) + amount).ToString());
-        }
-
-        private void Reload()
+        internal void Reload()
         {
             int curMagAmmo = MagazineAmmo;
-            MagazineAmmo = Mathf.Min(ReserveAmmo + MagazineAmmo, MagazineCapacity);
+            MagazineAmmo = Mathf.Min(ReserveAmmo + curMagAmmo, MagazineCapacity);
             ReserveAmmo -= MagazineAmmo - curMagAmmo;
         }
 
@@ -85,14 +76,6 @@ namespace ItemManager
                 Durability++;
                 damage = 0;
                 return;
-            }
-            
-            if (prevDurability < Durability)
-            {
-                AddAmmo((int)(Durability + 1 - prevDurability));
-
-                Reload();
-                Durability = MagazineAmmo;
             }
 
             if (MagazineAmmo <= 0)

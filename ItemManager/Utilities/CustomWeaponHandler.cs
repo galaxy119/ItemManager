@@ -5,7 +5,7 @@
         int DefaultReserveAmmo { get; }
     }
 
-    public class CustomWeaponHandler<TWeapon> : CustomItemHandler<TWeapon>, ICustomWeaponHandler where TWeapon : CustomItem, new()
+    public class CustomWeaponHandler<TWeapon> : CustomItemHandler<TWeapon>, ICustomWeaponHandler where TWeapon : CustomWeapon, new()
     {
         public int DefaultReserveAmmo { get; set; }
 

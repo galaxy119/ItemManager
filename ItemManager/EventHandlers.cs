@@ -21,7 +21,7 @@ namespace ItemManager
     public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, 
         IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, 
         IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, 
-        IEventHandlerWaitingForPlayers
+        IEventHandlerWaitingForPlayers, IEventHandlerReload
     {
         private readonly ImPlugin plugin;
         private readonly List<CustomItem> waitingForShot;
@@ -533,6 +533,16 @@ namespace ItemManager
             foreach (CustomItem customItem in ev.Player.GetCustomItems())
             {
                 customItem.OnRadioSwitch(ev.ChangeTo);
+            }
+        }
+
+        public void OnReload(PlayerReloadEvent ev)
+        {
+            if (ev.Player.HeldCustomItem() is CustomWeapon weapon)
+            {
+                ev.AmmoRemoved = 0;
+                weapon.Reload();
+                ev.ClipAmmoCountAfterReload = weapon.MagazineAmmo;
             }
         }
     }
