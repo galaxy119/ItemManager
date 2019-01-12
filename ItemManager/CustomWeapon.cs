@@ -1,4 +1,5 @@
-﻿using RemoteAdmin;
+﻿using ItemManager.Utilities;
+using RemoteAdmin;
 using scp4aiur;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace ItemManager
             {
                 for (int i = 0; i < manager.weapons.Length; i++)
                 {
-                    if ((int)Type == manager.weapons[i].inventoryID)
+                    if ((int)VanillaType == manager.weapons[i].inventoryID)
                     {
                         return i;
                     }
@@ -26,14 +27,16 @@ namespace ItemManager
             }
         }
 
+        public new ICustomWeaponHandler Handler { get; private set; }
+
         public int ReserveAmmo
         {
-            get => Dropped == null ? Items.customWeaponAmmo[PsuedoType][playerId] : -1;
+            get => Dropped == null ? Items.customWeaponAmmo[Handler.PsuedoType][playerId] : -1;
             set
             {
                 if (Dropped == null)
                 {
-                    Items.customWeaponAmmo[PsuedoType][playerId] = value;
+                    Items.customWeaponAmmo[Handler.PsuedoType][playerId] = value;
                 }
             }
         }
@@ -50,11 +53,13 @@ namespace ItemManager
 
         public override void OnInitialize()
         {
+            Handler = (ICustomWeaponHandler) base.Handler;
+
+            playerId = PlayerObject?.GetComponent<QueryProcessor>()?.PlayerId ?? -1;
+
             Durability = MagazineCapacity;
             MagazineAmmo = MagazineCapacity;
             prevDurability = Durability;
-
-            playerId = PlayerObject?.GetComponent<QueryProcessor>()?.PlayerId ?? -1;
         }
 
         private void AddAmmo(int amount)

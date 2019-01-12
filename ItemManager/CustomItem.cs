@@ -1,4 +1,5 @@
 ﻿using ItemManager.Events;
+using ItemManager.Utilities;
 using scp4aiur;
 using Smod2.API;
 using UnityEngine;
@@ -7,21 +8,20 @@ namespace ItemManager
 {
     public abstract class CustomItem
     {
-        internal bool justShot;
-
         /// <summary>
         /// The durability of the item in the pickup state, used for ID purposes.
         /// </summary>
         public float UniqueId { get; internal set; }
+
         /// <summary>
-        /// The psuedo ID to check custom item types.
+        /// The handler that handles all the additional data for this type.
         /// </summary>
-        public int PsuedoType { get; internal set; }
+        public ICustomItemHandler Handler { get; private set; }
 
         /// <summary>
         /// The ID of the item to impersonate.
         /// </summary>
-        public ItemType Type
+        public ItemType VanillaType
         {
             get => Dropped == null ? (ItemType)Inventory.items[Index].id : (ItemType)Dropped.info.itemId;
             set
@@ -42,11 +42,6 @@ namespace ItemManager
                 }
             }
         }
-
-        /// <summary>
-        /// The item ID of a newly-created item.
-        /// </summary>
-        public abstract ItemType DefaultItemId { get; }
 
         public int Sight
         {
@@ -156,34 +151,66 @@ namespace ItemManager
             }
         }
 
-        public void SetPlayer(GameObject target)
+        private void RegisterEvents()
         {
-            if (target == null)
+            if (this is IDoubleDroppable)
             {
-                if (PlayerObject != null)
-                {
-                    durability = Durability;
-                    Vector3 dropPos = PlayerObject.transform.position;
-                    Quaternion dropRot = PlayerObject.transform.rotation;
-
-                    Inventory.items.RemoveAt(Index);
-
-                    PlayerObject = null;
-                    Inventory = null;
-                    Index = -1;
-
-                    Dropped = Items.hostInventory.SetPickup((int)Type, UniqueId, dropPos, dropRot, Sight,
-                        Barrel, MiscAttachment).GetComponent<Pickup>();
-                }
+                Items.doubleDropTimers.Add(UniqueId, int.MinValue);
+                Items.readyForDoubleDrop.Add(UniqueId, false);
             }
-            else
-            {
-                if (PlayerObject == null)
-                {
-                    Items.ReinsertItem(Inventory, Inventory.items.Count, Dropped.info);
-                    Dropped.Delete();
-                }
-            }
+        }
+
+        internal void SetData(ICustomItemHandler handler, Vector3 pos, Quaternion rot)
+        {
+            Handler = handler;
+
+            Dropped = Items.hostInventory.SetPickup(0, UniqueId, pos, rot, 0, 0, 0).GetComponent<Pickup>();
+            Index = -1;
+            Durability = 0;
+
+            VanillaType = handler.DefaultType;
+
+            RegisterEvents();
+        }
+
+        internal void SetData(ICustomItemHandler handler, Pickup pickup)
+        {
+            Handler = handler;
+
+            Dropped = pickup;
+            Index = -1;
+            Durability = 0;
+
+            VanillaType = handler.DefaultType;
+
+            RegisterEvents();
+        }
+
+        internal void SetData(ICustomItemHandler handler, Inventory inventory)
+        {
+            Handler = handler;
+
+            PlayerObject = inventory.gameObject;
+            Inventory = inventory;
+            Index = Inventory.items.Count;
+            inventory.AddNewItem(0, 0);
+
+            VanillaType = handler.DefaultType;
+
+            RegisterEvents();
+        }
+
+        internal void SetData(ICustomItemHandler handler, Inventory inventory, int index)
+        {
+            Handler = handler;
+
+            PlayerObject = inventory.gameObject;
+            Inventory = inventory;
+            Index = index;
+
+            VanillaType = handler.DefaultType;
+
+            RegisterEvents();
         }
 
         public virtual void OnInitialize() { }

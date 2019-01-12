@@ -1,6 +1,6 @@
-﻿using Smod2.API;
+﻿using System;
 
-using System;
+using Smod2.API;
 
 namespace ItemManager.Recipes
 {
@@ -43,9 +43,9 @@ namespace ItemManager.Recipes
             }
             else
             {
-                if (Items.registeredItems.ContainsKey(OutputId))
+                if (Items.Handlers.ContainsKey(OutputId))
                 {
-                    Items.ConvertItem(OutputId, pickup);
+                    Items.Handlers[OutputId].Create(pickup);
                 }
                 else
                 {
@@ -74,9 +74,9 @@ namespace ItemManager.Recipes
             }
             else
             {
-                if (Items.registeredItems.ContainsKey(OutputId))
+                if (Items.Handlers.ContainsKey(OutputId))
                 {
-                    item = held ? Items.GiveItem(item.PlayerObject, OutputId) : Items.CreateItem(OutputId, item.Dropped.transform.position, item.Dropped.transform.rotation);
+                    item = held ? Items.Handlers[OutputId].Create(item.Inventory) : Items.Handlers[OutputId].Create(item.Dropped.transform.position, item.Dropped.transform.rotation);
                     item.Durability = OutputDurability;
                 }
                 else
@@ -98,7 +98,7 @@ namespace ItemManager.Recipes
 
         public override bool IsMatch(KnobSetting knob, CustomItem item, bool held)
         {
-            return !InputIsVanilla && knob == Knob && item.PsuedoType == InputId && (!held || InputCanBeHeld);
+            return !InputIsVanilla && knob == Knob && item.Handler.PsuedoType == InputId && (!held || InputCanBeHeld);
         }
 
         public override void Run(Pickup pickup)

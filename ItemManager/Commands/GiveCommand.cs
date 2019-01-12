@@ -8,9 +8,16 @@ namespace ItemManager.Commands
 {
     public class GiveCommand : ICommandHandler
     {
+        private readonly ImPlugin plugin;
+
+        public GiveCommand(ImPlugin plugin)
+        {
+            this.plugin = plugin;
+        }
+
         public string[] OnCall(ICommandSender sender, string[] args)
         {
-            if (!(sender is Server) && sender is Player player && !Plugin.giveRanks.Contains(player.GetRankName()))
+            if (!(sender is Server) && sender is Player player && !plugin.GiveRanks.Contains(player.GetRankName()))
             {
                 return new[]
                 {
@@ -43,7 +50,7 @@ namespace ItemManager.Commands
                 };
             }
 
-            if (!int.TryParse(args[1], out int psuedoId) || !Items.registeredItems.ContainsKey(psuedoId))
+            if (!int.TryParse(args[1], out int psuedoId) || !Items.Handlers.ContainsKey(psuedoId))
             {
                 return new[]
                 {
@@ -51,7 +58,7 @@ namespace ItemManager.Commands
                 };
             }
 
-            Items.GiveItem(target, psuedoId);
+            Items.Handlers[psuedoId].Create(target.GetComponent<Inventory>());
 
             return new[]
             {

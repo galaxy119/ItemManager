@@ -1,16 +1,20 @@
-﻿using ItemManager.Events;
-
+﻿using System;
+using Smod2.API;
 using UnityEngine;
 
 namespace ItemManager.Utilities
 {
-    internal interface ICustomItemHandler
+    public interface ICustomItemHandler
     {
         /// <summary>
         /// The item ID to use when handling 914.
         /// </summary>
-        int PsuedoId { get; }
-
+        int PsuedoType { get; }
+        /// <summary>
+        /// The item ID of a newly-created item.
+        /// </summary>
+        ItemType DefaultType { get; }
+        
         /// <summary>
         /// Creates a custom item of this type at a location and rotation.
         /// </summary>
@@ -35,112 +39,45 @@ namespace ItemManager.Utilities
         CustomItem Create(Inventory inventory, int index);
     }
 
-    internal class CustomItemHandler<TItem> : ICustomItemHandler where TItem : CustomItem, new()
+    public class CustomItemHandler<TItem> : ICustomItemHandler where TItem : CustomItem, new()
     {
-        public int PsuedoId { get; }
+        public int PsuedoType { get; }
+        public ItemType DefaultType { get; set;  }
 
         public CustomItemHandler(int psuedoId)
         {
-            PsuedoId = psuedoId;
+            PsuedoType = psuedoId;
         }
 
-        private static void RegisterEvents(TItem item)
+        public void Register()
         {
-            if (item is IDoubleDroppable)
-            {
-                Items.readyForDoubleDrop.Add(item.UniqueId, false);
-            }
+            Items.RegisterItem(this);
         }
 
-        public CustomItem Create(Vector3 position, Quaternion rotation)
+        public bool Unregister()
         {
-            TItem customItem = new TItem
-            {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
+            return Items.UnregisterItem(this);
+        }
 
-                durability = 0,
-                Index = -1
-            };
-
-            customItem.Dropped = Items.hostInventory.SetPickup((int)customItem.DefaultItemId,
-                customItem.UniqueId,
-                position,
-                rotation,
-                0, 0, 0).GetComponent<Pickup>();
-            customItem.ApplyPickup();
-
-            RegisterEvents(customItem);
+        private static TItem Create(Action<TItem> data)
+        {
+            TItem customItem = new TItem();
+            data(customItem);
             customItem.OnInitialize();
 
             return customItem;
         }
 
-        public CustomItem Create(Inventory inventory)
-        {
-            if (inventory.items.Count > 8)
-            {
-                return Create(inventory.gameObject.transform.position, inventory.gameObject.transform.rotation);
-            }
+        public CustomItem Create(Vector3 position, Quaternion rotation) => CreateOfType(position, rotation);
+        public TItem CreateOfType(Vector3 position, Quaternion rotation) => Create(x => x.SetData(this, position, rotation));
 
-            TItem customItem = new TItem
-            {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
-                    
-                durability = 0,
-                PlayerObject = inventory.gameObject,
-                Inventory = inventory,
-                Index = inventory.items.Count
-            };
-            inventory.AddNewItem((int)customItem.DefaultItemId, 0);
-            customItem.ApplyInventory();
+        public CustomItem Create(Inventory inventory) => CreateOfType(inventory);
+        public TItem CreateOfType(Inventory inventory) => Create(x => x.SetData(this, inventory));
 
-            RegisterEvents(customItem);
-            customItem.OnInitialize();
+        public CustomItem Create(Pickup pickup) => CreateOfType(pickup);
+        public TItem CreateOfType(Pickup pickup) => Create(x => x.SetData(this, pickup));
 
-            return customItem;
-        }
-
-        public CustomItem Create(Pickup pickup)
-        {
-            TItem customItem = new TItem
-            {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
-
-                durability = pickup.info.durability,
-                Dropped = pickup,
-                Index = -1
-            };
-            customItem.ApplyPickup();
-            customItem.Type = customItem.DefaultItemId;
-
-            RegisterEvents(customItem);
-            customItem.OnInitialize();
-
-            return customItem;
-        }
-
-        public CustomItem Create(Inventory inventory, int index)
-        {
-            TItem customItem = new TItem
-            {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
-
-                durability = inventory.items[index].durability,
-                PlayerObject = inventory.gameObject,
-                Inventory = inventory,
-                Index = index
-            };
-            customItem.ApplyInventory();
-            customItem.Type = customItem.DefaultItemId;
-
-            RegisterEvents(customItem);
-            customItem.OnInitialize();
-
-            return customItem;
-        }
+        public CustomItem Create(Inventory inventory, int index) => CreateOfType(inventory, index);
+        public TItem CreateOfType(Inventory inventory, int index) => Create(x => x.SetData(this, inventory, index));
     }
 }

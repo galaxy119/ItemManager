@@ -1,6 +1,6 @@
 ﻿using ItemManager;
 using ItemManager.Recipes;
-
+using ItemManager.Utilities;
 using Smod2.API;
 
 using UnityEngine;
@@ -9,8 +9,6 @@ namespace Example
 {
     public class BetterM4 : CustomWeapon
     {
-        public override ItemType DefaultItemId => ItemType.E11_STANDARD_RIFLE;
-        
         public override int MagazineCapacity => 4;
         public override float FireRate => 1.5f;
 
@@ -50,12 +48,19 @@ namespace Example
 
     public class BetterM4Recipe : Custom914Recipe
     {
+        private readonly ICustomItemHandler handler;
+
         public override KnobSetting Knob => KnobSetting.FINE;
         public override int Input => (int)ItemType.E11_STANDARD_RIFLE;
 
+        public BetterM4Recipe(ICustomItemHandler handler)
+        {
+            this.handler = handler;
+        }
+
         public override void Run(Pickup pickup)
         {
-            ItemManager.Items.ConvertItem(32, pickup);
+            handler.Create(pickup);
         }
     }
 }

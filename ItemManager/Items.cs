@@ -16,28 +16,22 @@ namespace ItemManager
         internal static Scp914 scp;
         internal static FloatIdManager ids = new FloatIdManager();
 
-        internal static Dictionary<int, ICustomItemHandler> registeredItems = new Dictionary<int, ICustomItemHandler>();
-        internal static Dictionary<int, ICustomWeaponHandler> registeredWeapons = new Dictionary<int, ICustomWeaponHandler>();
+        private static readonly Dictionary<int, ICustomItemHandler> handlers = new Dictionary<int, ICustomItemHandler>();
+        public static IReadOnlyDictionary<int, ICustomItemHandler> Handlers => handlers;
+
+        internal static Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
 
         internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
-        internal static Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
+        internal static List<CustomItem> itemList = new List<CustomItem>();
+        public static IReadOnlyList<CustomItem> AllItems => itemList;
 
         internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
         internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
 
-        internal static List<Base914Recipe> recipes = new List<Base914Recipe>();
+        private static List<Base914Recipe> recipes = new List<Base914Recipe>();
+        public static IReadOnlyList<Base914Recipe> Recipes => recipes;
 
         public const float DefaultDurability = -4.656647E+11f;
-
-        public static IEnumerable<CustomItem> AllItems()
-        {
-            return customItems.Select(x => x.Value);
-        }
-
-        public static IEnumerable<T> AllItems<T>() where T : CustomItem
-        {
-            return AllItems().OfType<T>();
-        }
 
         /// <summary>
         /// Adds a 914 recipe to the recipe list.
@@ -60,151 +54,36 @@ namespace ItemManager
         /// <summary>
         /// Registers a custom item to an ID.
         /// </summary>
-        /// <typeparam name="TItem">The type (which inherits CustomItem) to register.</typeparam>
-        /// <param name="id">The ID to register the type to.</param>
-        public static void RegisterItem<TItem>(int id) where TItem : CustomItem, new()
+        /// <param name="handler">Item to register.</param>
+        internal static void RegisterItem(ICustomItemHandler handler)
         {
-            if (typeof(CustomWeapon).IsAssignableFrom(typeof(TItem)))
+            if (handler is ICustomWeaponHandler weaponHandler)
             {
-                throw new InvalidOperationException("Weapons cannot be registered as a custom item. See \"Items.RegisterWeapon\".");
+                customWeaponAmmo.Add(weaponHandler.PsuedoType, new Dictionary<int, int>());
             }
-
-            registeredItems.Add(id, new CustomItemHandler<TItem>(id));
-        }
-
-        /// <summary>
-        /// Registers a custom item to an ID.
-        /// </summary>
-        /// <typeparam name="TWeapon">The type (which inherits CustomWeapon) to register.</typeparam>
-        /// <param name="id">The ID to register the type to.</param>
-        /// <param name="defaultReserveAmmo">The amount of ammo of this item type to give a player when they first spawn.</param>
-        public static void RegisterWeapon<TWeapon>(int id, int defaultReserveAmmo) where TWeapon : CustomWeapon, new()
-        {
-            customWeaponAmmo.Add(id, new Dictionary<int, int>());
-
-            ICustomWeaponHandler handler = new CustomWeaponHandler<TWeapon>(id, defaultReserveAmmo);
-            registeredItems.Add(id, handler);
-            registeredWeapons.Add(id, handler);
+            
+            handlers.Add(handler.PsuedoType, handler);
         }
 
         /// <summary>
         /// Unregisters a custom item from an ID.
         /// </summary>
-        /// <param name="id">ID of the registered item to remove.</param>
-        public static bool UnregisterItem(int id)
+        /// <param name="handler">Item to unregister.</param>
+        internal static bool UnregisterItem(ICustomItemHandler handler)
         {
-            bool success = false;
-
-            if (registeredItems.Remove(id))
+            if (handlers.Remove(handler.PsuedoType))
             {
-                foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key))
+                foreach (float uniqId in customItems.Where(x => x.Value.Handler.PsuedoType == handler.PsuedoType).Select(x => x.Key))
                 {
                     customItems.Remove(uniqId);
                 }
+                
+                customWeaponAmmo.Remove(handler.PsuedoType);
 
-                success = true;
+                return true;
             }
 
-            if (registeredWeapons.Remove(id))
-            {
-                foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key))
-                {
-                    customItems.Remove(uniqId);
-                }
-
-                customWeaponAmmo.Remove(id);
-
-                success = true;
-            }
-
-            return success;
-        }
-
-        /// <summary>
-        /// Creates a new custom item pickup in the world.
-        /// </summary>
-        /// <param name="id">ID of the registered custom item.</param>
-        /// <param name="position">The position of the pickup.</param>
-        /// <param name="rotation">The rotation of the pickup.</param>
-        /// <returns></returns>
-        public static CustomItem CreateItem(int id, Vector3 position, Quaternion rotation)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(position, rotation);
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
-        }
-
-        /// <summary>
-        /// Gives an item to a specified player.
-        /// </summary>
-        /// <param name="player">The player to receive the item.</param>
-        /// <param name="id">The ID of the item to give the player.</param>
-        /// <returns></returns>
-        public static CustomItem GiveItem(GameObject player, int id)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(player.GetComponent<Inventory>());
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
-        }
-
-        /// <summary>
-        /// Gives an item to a specified player.
-        /// </summary>
-        /// <param name="player">The player to receive the item.</param>
-        /// <param name="id">The ID of the item to give the player.</param>
-        /// <returns></returns>
-        public static CustomItem GiveItem(this Player player, int id)
-        {
-            return GiveItem((GameObject)player.GetGameObject(), id);
-        }
-
-        /// <summary>
-        /// Creates and registers a custom item.
-        /// </summary>
-        /// <param name="id">Pseudo ID of the custom item.</param>
-        /// <param name="inventory">Inventory of the player holding the item.</param>
-        /// <param name="index">Index at which the item is being held at.</param>
-        public static CustomItem ConvertItem(int id, Inventory inventory, int index)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(inventory, index);
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
-        }
-
-        /// <summary>
-        /// Creates and registers a custom item.
-        /// </summary>
-        /// <param name="id">Psuedo ID of the custom item.</param>
-        /// <param name="pickup">Item on the ground that should be registered.</param>
-        public static CustomItem ConvertItem(int id, Pickup pickup)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(pickup);
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
+            return false;
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ namespace ItemManager.Recipes
 
         public override bool IsMatch(KnobSetting knob, CustomItem item, bool held)
         {
-            return !(Input < 30) && knob == Knob && item.PsuedoType == Input;
+            return !(Input < 30) && knob == Knob && item.Handler.PsuedoType == Input;
         }
     }
 }

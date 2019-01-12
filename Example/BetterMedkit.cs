@@ -7,8 +7,6 @@ namespace Example
 {
     public class BetterMedkit : CustomItem, IDoubleDroppable
     {
-        public override ItemType DefaultItemId => ItemType.MEDKIT;
-
         public float DoubleDropWindow => 0.25f;
 
         public BetterMedkit()

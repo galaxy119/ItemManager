@@ -59,7 +59,7 @@
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Events\IDoubleDroppable.cs" />
     <Compile Include="Items.cs" />
-    <Compile Include="Plugin.cs" />
+    <Compile Include="ImPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Recipes\Base914Recipe.cs" />
     <Compile Include="Recipes\Custom914Recipe.cs" />
