@@ -10,6 +10,7 @@ using ItemManager.Recipes;
 using ItemManager.Events;
 
 using System.Linq;
+using ItemManager.Utilities;
 using RemoteAdmin;
 using Smod2.API;
 using Object = UnityEngine.Object;
@@ -20,48 +21,49 @@ namespace ItemManager
     public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, 
         IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, 
         IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, 
-        IEventHandlerWaitingForPlayers
+        IEventHandlerWaitingForPlayers, IEventHandlerReload
     {
+        private readonly ImPlugin plugin;
         private readonly List<CustomItem> waitingForShot;
 
-        public EventHandlers()
+        public EventHandlers(ImPlugin plugin)
         {
+            this.plugin = plugin;
+
             waitingForShot = new List<CustomItem>();
         }
 
         public void OnWaitingForPlayers(WaitingForPlayersEvent ev)
         {
-            Plugin.heldItems = Plugin.instance.GetConfigInt("im_helditems");
-            Plugin.giveRanks = Plugin.instance.GetConfigList("im_give_ranks");
+            plugin.RefreshConfig();
         }
 
         public void OnRoundStart(RoundStartEvent ev)
         {
-            Items.scp = Object.FindObjectOfType<Scp914>();
-            Items.hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
+            plugin.Manager.RefreshMap();
         }
 
         public void OnSpawn(PlayerSpawnEvent ev)
         {
-            foreach (int id in Items.customWeaponAmmo.Keys)
+            foreach (WorldCustomWeapons weapons in plugin.Manager.items.OfType<WorldCustomWeapons>())
             {
-                if (Items.customWeaponAmmo[id].ContainsKey(ev.Player.PlayerId))
+                if (weapons.AmmoReserves.ContainsKey(ev.Player.PlayerId))
                 {
-                    Items.customWeaponAmmo[id][ev.Player.PlayerId] = Items.registeredWeapons[id].DefaultReserveAmmo;
+                    plugin.Manager.customWeaponAmmo[id][ev.Player.PlayerId] = plugin.Manager.registeredWeapons[id].DefaultReserveAmmo;
                 }
                 else
                 {
-                    Items.customWeaponAmmo[id].Add(ev.Player.PlayerId, Items.registeredWeapons[id].DefaultReserveAmmo);
+                    weapons.AmmoReserves.Add(ev.Player.PlayerId, weapons.DefaultAmmo));
                 }
             }
         }
 
         public void OnRoundRestart(RoundRestartEvent ev)
         {
-            foreach (float uniq in Items.customItems.Keys.ToArray())
+            foreach (float uniq in plugin.Manager.customItems.Keys.ToArray())
             {
-                Items.customItems[uniq].Unhook();
-                Items.customItems.Remove(uniq);
+                plugin.Manager.customItems[uniq].Unhook();
+                plugin.Manager.customItems.Remove(uniq);
             }
         }
 
@@ -81,7 +83,7 @@ namespace ItemManager
                 customItem.PlayerObject = null;
                 customItem.Inventory = null;
                 customItem.Index = -1;
-                customItem.Dropped = Items.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
+                customItem.Dropped = plugin.Manager.hostInventory.SetPickup(item.id, customItem.UniqueId, player.transform.position,
                     player.transform.rotation, item.modSight, item.modBarrel, item.modOther).GetComponent<Pickup>();
 
                 customItem.ApplyPickup();
@@ -172,9 +174,9 @@ namespace ItemManager
                 }
                 catch { }
 
-                if (item != null && Items.customItems.ContainsKey(item.Value.durability))
+                if (item != null && plugin.Manager.customItems.ContainsKey(item.Value.durability))
                 {
-                    CustomItem customItem = Items.customItems[item.Value.durability];
+                    CustomItem customItem = plugin.Manager.customItems[item.Value.durability];
 
                     InvokePickupEvent(customItem, player, inventory, inventory.items.Count - 1, item.Value);
                 }
@@ -196,8 +198,8 @@ namespace ItemManager
                     return;
                 }
 
-                CustomItem customItem = Items.FindCustomItem(player, dropIndex);
-                Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), dropIndex);
+                CustomItem customItem = plugin.Manager.FindCustomItem(player, dropIndex);
+                plugin.Manager.CorrectItemIndexes(plugin.Manager.GetCustomItems(inventory.gameObject), dropIndex);
 
                 switch (customItem) {
                     case null:
@@ -205,10 +207,10 @@ namespace ItemManager
 
                     case IDoubleDroppable doubleDroppable when doubleDroppable.DoubleDropWindow > 0:
                     {
-                        if (Items.readyForDoubleDrop[customItem.UniqueId])
+                        if (plugin.Manager.readyForDoubleDrop[customItem.UniqueId])
                         {
-                            Items.readyForDoubleDrop[customItem.UniqueId] = false;
-                            Timing.Remove(Items.doubleDropTimers[customItem.UniqueId]);
+                            plugin.Manager.readyForDoubleDrop[customItem.UniqueId] = false;
+                            Timing.Remove(plugin.Manager.doubleDropTimers[customItem.UniqueId]);
 
                             InvokeDoubleDropEvent(customItem, inventory, dropIndex, drop);
                         }
@@ -217,14 +219,14 @@ namespace ItemManager
                             Pickup.PickupInfo info = drop.info;
                             drop.Delete(); //delete dropped item
                             Inventory.SyncItemInfo doubleDropDummy = ReinsertItem(inventory, dropIndex, info); //add item back to inventory
-                            Items.readyForDoubleDrop[customItem.UniqueId] = true;
+                            plugin.Manager.readyForDoubleDrop[customItem.UniqueId] = true;
 
-                            Items.doubleDropTimers.Remove(customItem.UniqueId);
-                            Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy => 
+                            plugin.Manager.doubleDropTimers.Remove(customItem.UniqueId);
+                            plugin.Manager.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy => 
                             {
-                                Items.readyForDoubleDrop[customItem.UniqueId] = false;
+                                plugin.Manager.readyForDoubleDrop[customItem.UniqueId] = false;
                                 inventory.items.Remove(doubleDropDummy); //remove dummy from inventory
-                                drop = Items.hostInventory //create item in world
+                                drop = plugin.Manager.hostInventory //create item in world
                                     .SetPickup(info.itemId, info.durability, player.transform.position, player.transform.rotation, info.weaponMods[0], info.weaponMods[1], info.weaponMods[2])
                                     .GetComponent<Pickup>();
 
@@ -248,15 +250,15 @@ namespace ItemManager
 
             foreach (Pickup pickup in colliders.Select(x => x.GetComponent<Pickup>()).Where(x => x != null))
             {
-                if (Items.customItems.ContainsKey(pickup.info.durability))
+                if (plugin.Manager.customItems.ContainsKey(pickup.info.durability))
                 {
-                    CustomItem item = Items.customItems[pickup.info.durability];
+                    CustomItem item = plugin.Manager.customItems[pickup.info.durability];
 
-                    Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, false))
+                    Base914Recipe recipe = plugin.Manager.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, false))
                         .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
-                    item.Dropped = Items.hostInventory.SetPickup((int)item.Type, pickup.info.durability,
-                        pickup.info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
+                    item.Dropped = plugin.Manager.hostInventory.SetPickup((int)item.Type, pickup.info.durability,
+                        pickup.info.position + (plugin.Manager.scp.output_obj.position - plugin.Manager.scp.intake_obj.position),
                         pickup.info.rotation, item.Sight, item.Barrel, item.MiscAttachment).GetComponent<Pickup>();
                     pickup.Delete();
 
@@ -273,34 +275,34 @@ namespace ItemManager
                 {
                     Pickup.PickupInfo info = pickup.info;
 
-                    Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, info))
+                    Base914Recipe recipe = plugin.Manager.recipes.Where(x => x.IsMatch(ev.KnobSetting, info))
                         .OrderByDescending(x => x.Priority).FirstOrDefault();
 
                     if (recipe != null)
                     {
                         pickup.Delete();
 
-                        recipe.Run(Items.hostInventory.SetPickup(info.itemId,
+                        recipe.Run(plugin.Manager.hostInventory.SetPickup(info.itemId,
                             info.durability,
-                            info.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position),
+                            info.position + (plugin.Manager.scp.output_obj.position - plugin.Manager.scp.intake_obj.position),
                             info.rotation, info.weaponMods[0], info.weaponMods[1], info.weaponMods[2]).GetComponent<Pickup>());
                     }
                 }
             }
 
-            if (Plugin.heldItems > 0)
+            if (plugin.heldItems > 0)
             {
                 foreach (Inventory inventory in colliders.Select(x => x.GetComponent<Inventory>()).Where(x => x != null))
                 {
                     for (int i = 0; i < inventory.items.Count; i++)
                     {
-                        CustomItem item = Items.FindCustomItem(inventory.gameObject, i);
+                        CustomItem item = plugin.Manager.FindCustomItem(inventory.gameObject, i);
 
                         if (item == null)
                         {
-                            if (Plugin.heldItems == 1 || Plugin.heldItems == 3)
+                            if ((plugin.heldItems & HeldSetting.Custom) == HeldSetting.Custom)
                             {
-                                Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, inventory, i))
+                                Base914Recipe recipe = plugin.Manager.recipes.Where(x => x.IsMatch(ev.KnobSetting, inventory, i))
                                     .OrderByDescending(x => x.Priority).FirstOrDefault();
 
                                 if (recipe != null)
@@ -311,7 +313,7 @@ namespace ItemManager
                                 {
                                     byte itemId = (byte)inventory.items[i].id;
                                     byte knobId = (byte)ev.KnobSetting;
-                                    sbyte outputType = (sbyte)Items.scp.recipes[itemId].outputs[knobId].outputs[Random.Range(0, Items.scp.recipes[itemId].outputs[knobId].outputs.Count)];
+                                    sbyte outputType = (sbyte)plugin.Manager.scp.recipes[itemId].outputs[knobId].outputs[Random.Range(0, plugin.Manager.scp.recipes[itemId].outputs[knobId].outputs.Count)];
 
                                     if (outputType > 0)
                                     {
@@ -323,7 +325,7 @@ namespace ItemManager
                                     }
                                     else
                                     {
-                                        Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), i);
+                                        plugin.Manager.CorrectItemIndexes(plugin.Manager.GetCustomItems(inventory.gameObject), i);
                                         inventory.items.RemoveAt(i);
                                     }
                                 }
@@ -331,9 +333,9 @@ namespace ItemManager
                         }
                         else
                         {
-                            if (Plugin.heldItems == 2 || Plugin.heldItems == 3)
+                            if ((plugin.heldItems & HeldSetting.Normal) == HeldSetting.Normal)
                             {
-                                Base914Recipe recipe = Items.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, true))
+                                Base914Recipe recipe = plugin.Manager.recipes.Where(x => x.IsMatch(ev.KnobSetting, item, true))
                                     .OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
 
                                 if (recipe != null)
@@ -342,7 +344,7 @@ namespace ItemManager
                                 }
                                 else
                                 {
-                                    item.On914(ev.KnobSetting, item.PlayerObject.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
+                                    item.On914(ev.KnobSetting, item.PlayerObject.transform.position + (plugin.Manager.scp.output_obj.position - plugin.Manager.scp.intake_obj.position), true);
                                 }
                             }
                         }
@@ -353,11 +355,11 @@ namespace ItemManager
 
         public void OnPlayerHurt(PlayerHurtEvent ev)
         {
-            if (ev.Attacker.PlayerId != ev.Player.PlayerId)
+            if (ev.Attacker != null && ev.Attacker.PlayerId != ev.Player.PlayerId)
             {
-                CustomItem customItem = ev.Attacker?.HeldCustomItem();
+                CustomItem customItem = plugin.Manager.HeldCustomItem(ev.Attacker);
 
-                if (customItem != null && !customItem.justShot)
+                if (customItem != null)
                 {
                     waitingForShot.Add(customItem);
 
@@ -420,8 +422,8 @@ namespace ItemManager
                     return;
                 }
 
-                CustomItem item = Items.FindCustomItem(player, index);
-                Items.CorrectItemIndexes(ev.Player.GetCustomItems(), index);
+                CustomItem item = plugin.Manager.FindCustomItem(player, index);
+                plugin.Manager.CorrectItemIndexes(ev.Player.GetCustomItems(), index);
 
                 item?.OnMedkitUse();
             });
@@ -526,6 +528,16 @@ namespace ItemManager
             foreach (CustomItem customItem in ev.Player.GetCustomItems())
             {
                 customItem.OnRadioSwitch(ev.ChangeTo);
+            }
+        }
+
+        public void OnReload(PlayerReloadEvent ev)
+        {
+            if (ev.Player.HeldCustomItem() is CustomWeapon weapon)
+            {
+                ev.AmmoRemoved = 0;
+                weapon.Reload();
+                ev.ClipAmmoCountAfterReload = weapon.MagazineAmmo;
             }
         }
     }

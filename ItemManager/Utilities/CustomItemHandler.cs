@@ -1,15 +1,15 @@
-﻿using ItemManager.Events;
-
+﻿using System;
+using System.Linq;
 using UnityEngine;
 
 namespace ItemManager.Utilities
 {
-    internal interface ICustomItemHandler
+    public interface ICustomItemHandler
     {
         /// <summary>
-        /// The item ID to use when handling 914.
+        /// The item manager used to handle the custom item.
         /// </summary>
-        int PsuedoId { get; }
+        Items Manager { get; }
 
         /// <summary>
         /// Creates a custom item of this type at a location and rotation.
@@ -35,49 +35,79 @@ namespace ItemManager.Utilities
         CustomItem Create(Inventory inventory, int index);
     }
 
-    internal class CustomItemHandler<TItem> : ICustomItemHandler where TItem : CustomItem, new()
+    public class CustomItemHandler<TItem> : ICustomItemHandler where TItem : CustomItem, new()
     {
-        public int PsuedoId { get; }
+        private bool unmanaged;
+        private readonly WorldCustomItems items;
 
-        public CustomItemHandler(int psuedoId)
+        private Items manager;
+        public Items Manager
         {
-            PsuedoId = psuedoId;
+            get => manager;
+            set
+            {
+                if (value == null)
+                {
+                    unmanaged = true;
+                    manager.items.Remove(items);
+                }
+                else
+                {
+                    if (manager != null)
+                    {
+                        value.items.Remove(items);
+                    }
+
+                    value.items.Add(items);
+                    unmanaged = false;
+                }
+
+                manager = value;
+            }
         }
 
-        private static void RegisterEvents(TItem item)
+        public CustomItemHandler()
         {
-            if (item is IDoubleDroppable)
+            items = new WorldCustomItems(this);
+        }
+
+        private void ValidateCreationEnvironment()
+        {
+            if (unmanaged)
             {
-                Items.readyForDoubleDrop.Add(item.UniqueId, false);
+                throw new InvalidOperationException($"Please set the {nameof(Manager)} to a non-null value.");
             }
         }
 
         public CustomItem Create(Vector3 position, Quaternion rotation)
         {
+            ValidateCreationEnvironment();
+
             TItem customItem = new TItem
             {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
+                UniqueId = FloatIdManager.Instance.NewId(),
 
                 durability = 0,
                 Index = -1
             };
 
-            customItem.Dropped = Items.hostInventory.SetPickup((int)customItem.DefaultItemId,
+            customItem.Dropped = Manager.hostInventory.SetPickup((int)customItem.DefaultItemId,
                 customItem.UniqueId,
                 position,
                 rotation,
                 0, 0, 0).GetComponent<Pickup>();
             customItem.ApplyPickup();
-
-            RegisterEvents(customItem);
+            
             customItem.OnInitialize();
 
+            items.Add(customItem.UniqueId, customItem);
             return customItem;
         }
 
         public CustomItem Create(Inventory inventory)
         {
+            ValidateCreationEnvironment();
+
             if (inventory.items.Count > 8)
             {
                 return Create(inventory.gameObject.transform.position, inventory.gameObject.transform.rotation);
@@ -85,8 +115,7 @@ namespace ItemManager.Utilities
 
             TItem customItem = new TItem
             {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
+                UniqueId = FloatIdManager.Instance.NewId(),
                     
                 durability = 0,
                 PlayerObject = inventory.gameObject,
@@ -95,19 +124,20 @@ namespace ItemManager.Utilities
             };
             inventory.AddNewItem((int)customItem.DefaultItemId, 0);
             customItem.ApplyInventory();
-
-            RegisterEvents(customItem);
+            
             customItem.OnInitialize();
 
+            items.Add(customItem.UniqueId, customItem);
             return customItem;
         }
 
         public CustomItem Create(Pickup pickup)
         {
+            ValidateCreationEnvironment();
+
             TItem customItem = new TItem
             {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
+                UniqueId = FloatIdManager.Instance.NewId(),
 
                 durability = pickup.info.durability,
                 Dropped = pickup,
@@ -115,19 +145,20 @@ namespace ItemManager.Utilities
             };
             customItem.ApplyPickup();
             customItem.Type = customItem.DefaultItemId;
-
-            RegisterEvents(customItem);
+            
             customItem.OnInitialize();
 
+            items.Add(customItem.UniqueId, customItem);
             return customItem;
         }
 
         public CustomItem Create(Inventory inventory, int index)
         {
+            ValidateCreationEnvironment();
+
             TItem customItem = new TItem
             {
-                PsuedoType = PsuedoId,
-                UniqueId = Items.ids.NewId(),
+                UniqueId = FloatIdManager.Instance.NewId(),
 
                 durability = inventory.items[index].durability,
                 PlayerObject = inventory.gameObject,
@@ -136,10 +167,10 @@ namespace ItemManager.Utilities
             };
             customItem.ApplyInventory();
             customItem.Type = customItem.DefaultItemId;
-
-            RegisterEvents(customItem);
+            
             customItem.OnInitialize();
 
+            items.Add(customItem.UniqueId, customItem);
             return customItem;
         }
     }

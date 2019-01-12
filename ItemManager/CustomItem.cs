@@ -1,5 +1,4 @@
-﻿using ItemManager.Events;
-using scp4aiur;
+﻿using ItemManager.Utilities;
 using Smod2.API;
 using UnityEngine;
 
@@ -7,16 +6,13 @@ namespace ItemManager
 {
     public abstract class CustomItem
     {
-        internal bool justShot;
+        private readonly Items manager;
+        private readonly WorldCustomItems items;
 
         /// <summary>
         /// The durability of the item in the pickup state, used for ID purposes.
         /// </summary>
         public float UniqueId { get; internal set; }
-        /// <summary>
-        /// The psuedo ID to check custom item types.
-        /// </summary>
-        public int PsuedoType { get; internal set; }
 
         /// <summary>
         /// The ID of the item to impersonate.
@@ -156,6 +152,12 @@ namespace ItemManager
             }
         }
 
+        protected CustomItem(Items manager, WorldCustomItems items)
+        {
+            this.manager = manager;
+            this.items = items;
+        }
+
         public void SetPlayer(GameObject target)
         {
             if (target == null)
@@ -172,7 +174,7 @@ namespace ItemManager
                     Inventory = null;
                     Index = -1;
 
-                    Dropped = Items.hostInventory.SetPickup((int)Type, UniqueId, dropPos, dropRot, Sight,
+                    Dropped = manager.hostInventory.SetPickup((int)Type, UniqueId, dropPos, dropRot, Sight,
                         Barrel, MiscAttachment).GetComponent<Pickup>();
                 }
             }
@@ -180,7 +182,7 @@ namespace ItemManager
             {
                 if (PlayerObject == null)
                 {
-                    Items.ReinsertItem(Inventory, Inventory.items.Count, Dropped.info);
+                    manager.ReinsertItem(Inventory, Inventory.items.Count, Dropped.info);
                     Dropped.Delete();
                 }
             }
@@ -201,7 +203,7 @@ namespace ItemManager
             if (Dropped == null)
             {
                 Inventory.items.RemoveAt(Index);
-                Items.CorrectItemIndexes(Items.GetCustomItems(Inventory.gameObject), Index);
+                Items.CorrectItemIndexes(manager.GetCustomItems(Inventory.gameObject), Index);
             }
             else
             {
@@ -220,18 +222,7 @@ namespace ItemManager
         {
             Unhooked = true;
 
-            Items.customItems.Remove(UniqueId);
-
-            if (this is IDoubleDroppable)
-            { //if double droppable
-                if (Items.doubleDropTimers.ContainsKey(UniqueId))
-                {
-                    Timing.Remove(Items.doubleDropTimers[UniqueId]);
-                    Items.doubleDropTimers.Remove(UniqueId);
-                }
-
-                Items.readyForDoubleDrop.Remove(UniqueId);
-            }
+            items.Remove(UniqueId);
 
             OnUnhooked();
         }

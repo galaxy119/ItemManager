@@ -1,12 +1,16 @@
-﻿using RemoteAdmin;
+﻿using ItemManager.Utilities;
 using scp4aiur;
+using Smod2.API;
+
 using UnityEngine;
+using RemoteAdmin;
 
 namespace ItemManager
 {
     public abstract class CustomWeapon : CustomItem
     {
-        private readonly WeaponManager manager;
+        private readonly WorldCustomWeapons handler;
+        private readonly WeaponManager wepManager;
         private float prevDurability;
         private int playerId;
 
@@ -14,9 +18,9 @@ namespace ItemManager
         {
             get
             {
-                for (int i = 0; i < manager.weapons.Length; i++)
+                for (int i = 0; i < wepManager.weapons.Length; i++)
                 {
-                    if ((int)Type == manager.weapons[i].inventoryID)
+                    if ((int)Type == wepManager.weapons[i].inventoryID)
                     {
                         return i;
                     }
@@ -28,7 +32,7 @@ namespace ItemManager
 
         public int ReserveAmmo
         {
-            get => Dropped == null ? Items.customWeaponAmmo[PsuedoType][playerId] : -1;
+            get => Dropped == null ? handler.[playerId] : -1;
             set
             {
                 if (Dropped == null)
@@ -43,9 +47,10 @@ namespace ItemManager
 
         public abstract float FireRate { get; }
 
-        protected CustomWeapon()
+        protected CustomWeapon(Items manager, ICustomWeaponHandler handler) : base(manager)
         {
-            manager = GameObject.Find("Host").GetComponent<WeaponManager>();
+            this.handler = handler;
+            wepManager = GameObject.Find("Host").GetComponent<WeaponManager>();
         }
 
         public override void OnInitialize()
@@ -60,13 +65,13 @@ namespace ItemManager
         private void AddAmmo(int amount)
         {
             AmmoBox ammo = PlayerObject.GetComponent<AmmoBox>();
-            WeaponManager.Weapon weapon = manager.weapons[WeaponManagerIndex];
+            WeaponManager.Weapon weapon = wepManager.weapons[WeaponManagerIndex];
 
             // Give player enough ammo for a reload
             ammo.SetOneAmount(weapon.ammoType, (ammo.GetAmmo(weapon.ammoType) + amount).ToString());
         }
 
-        private void Reload()
+        internal void Reload()
         {
             int curMagAmmo = MagazineAmmo;
             MagazineAmmo = Mathf.Min(ReserveAmmo + MagazineAmmo, MagazineCapacity);

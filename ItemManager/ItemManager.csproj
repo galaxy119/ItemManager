@@ -54,17 +54,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\GiveCommand.cs" />
+    <Compile Include="Commands\ImCommand.cs" />
     <Compile Include="CustomItem.cs" />
     <Compile Include="CustomWeapon.cs" />
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Events\IDoubleDroppable.cs" />
     <Compile Include="Items.cs" />
-    <Compile Include="Plugin.cs" />
+    <Compile Include="ImPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Recipes\Base914Recipe.cs" />
     <Compile Include="Recipes\Custom914Recipe.cs" />
     <Compile Include="Recipes\Id914Recipe.cs" />
+    <Compile Include="Utilities\CustomItemData.cs" />
     <Compile Include="Utilities\CustomItemHandler.cs" />
+    <Compile Include="Utilities\WorldCustomItems.cs" />
     <Compile Include="Utilities\CustomWeaponHandler.cs" />
     <Compile Include="Utilities\FloatIdManager.cs" />
     <Compile Include="Utilities\Timing.cs" />

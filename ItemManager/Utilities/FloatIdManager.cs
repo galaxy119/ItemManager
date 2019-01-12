@@ -4,6 +4,8 @@ namespace ItemManager.Utilities
 {
     internal class FloatIdManager
     {
+        public static FloatIdManager Instance { get; set; }
+
         private readonly byte[] bytes;
 
         /// <summary>
@@ -36,7 +38,10 @@ namespace ItemManager.Utilities
                 {
                     if (++bytes[2] == 0)
                     {
-                        bytes[3]++; //preserve leading (-) sign
+                        if (++bytes[3] == 0) //preserve leading (-) sign
+                        {
+                            throw new NotImplementedException("Holy shit your server must be up for years or you must have a lot of custom items. Report this to me and I'll add a fix it.");
+                        }
                     }
                 }
             }

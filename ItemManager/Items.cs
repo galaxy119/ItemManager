@@ -7,43 +7,47 @@ using ItemManager.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Object = UnityEngine.Object;
 
 namespace ItemManager
 {
-    public static class Items
+    public class Items
     {
-        internal static Inventory hostInventory;
-        internal static Scp914 scp;
-        internal static FloatIdManager ids = new FloatIdManager();
+        internal List<WorldCustomItems> items;
+        internal List<Base914Recipe> recipes;
 
-        internal static Dictionary<int, ICustomItemHandler> registeredItems = new Dictionary<int, ICustomItemHandler>();
-        internal static Dictionary<int, ICustomWeaponHandler> registeredWeapons = new Dictionary<int, ICustomWeaponHandler>();
+        internal Inventory hostInventory;
+        internal Scp914 scp;
 
-        internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
-        internal static Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
+        /*internal Dictionary<int, ICustomItemHandler> registeredItems = new Dictionary<int, ICustomItemHandler>();
+        internal Dictionary<int, ICustomWeaponHandler> registeredWeapons = new Dictionary<int, ICustomWeaponHandler>();
 
-        internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
-        internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
+        internal Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
+        internal Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
 
-        internal static List<Base914Recipe> recipes = new List<Base914Recipe>();
+        internal Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
+        internal Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();*/
 
         public const float DefaultDurability = -4.656647E+11f;
+        public IReadOnlyList<WorldCustomItems> Registered => items;
 
-        public static IEnumerable<CustomItem> AllItems()
+        public Items()
         {
-            return customItems.Select(x => x.Value);
+            recipes = new List<Base914Recipe>();
+            items = new List<WorldCustomItems>();
         }
 
-        public static IEnumerable<T> AllItems<T>() where T : CustomItem
+        internal void RefreshMap()
         {
-            return AllItems().OfType<T>();
+            hostInventory = GameObject.Find("Host").GetComponent<Inventory>();
+            scp = Object.FindObjectOfType<Scp914>();
         }
 
         /// <summary>
         /// Adds a 914 recipe to the recipe list.
         /// </summary>
         /// <param name="recipe">Recipe to register.</param>
-        public static void AddRecipe(Base914Recipe recipe)
+        public void AddRecipe(Base914Recipe recipe)
         {
             recipes.Add(recipe);
         }
@@ -52,166 +56,16 @@ namespace ItemManager
         /// Removes a 914 recipe from the recipe list.
         /// </summary>
         /// <param name="recipe">Recipe to unregister.</param>
-        public static void RemoveRecipe(Base914Recipe recipe)
+        public void RemoveRecipe(Base914Recipe recipe)
         {
             recipes.Remove(recipe);
-        }
-
-        /// <summary>
-        /// Registers a custom item to an ID.
-        /// </summary>
-        /// <typeparam name="TItem">The type (which inherits CustomItem) to register.</typeparam>
-        /// <param name="id">The ID to register the type to.</param>
-        public static void RegisterItem<TItem>(int id) where TItem : CustomItem, new()
-        {
-            if (typeof(CustomWeapon).IsAssignableFrom(typeof(TItem)))
-            {
-                throw new InvalidOperationException("Weapons cannot be registered as a custom item. See \"Items.RegisterWeapon\".");
-            }
-
-            registeredItems.Add(id, new CustomItemHandler<TItem>(id));
-        }
-
-        /// <summary>
-        /// Registers a custom item to an ID.
-        /// </summary>
-        /// <typeparam name="TWeapon">The type (which inherits CustomWeapon) to register.</typeparam>
-        /// <param name="id">The ID to register the type to.</param>
-        /// <param name="defaultReserveAmmo">The amount of ammo of this item type to give a player when they first spawn.</param>
-        public static void RegisterWeapon<TWeapon>(int id, int defaultReserveAmmo) where TWeapon : CustomWeapon, new()
-        {
-            customWeaponAmmo.Add(id, new Dictionary<int, int>());
-
-            ICustomWeaponHandler handler = new CustomWeaponHandler<TWeapon>(id, defaultReserveAmmo);
-            registeredItems.Add(id, handler);
-            registeredWeapons.Add(id, handler);
-        }
-
-        /// <summary>
-        /// Unregisters a custom item from an ID.
-        /// </summary>
-        /// <param name="id">ID of the registered item to remove.</param>
-        public static bool UnregisterItem(int id)
-        {
-            bool success = false;
-
-            if (registeredItems.Remove(id))
-            {
-                foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key))
-                {
-                    customItems.Remove(uniqId);
-                }
-
-                success = true;
-            }
-
-            if (registeredWeapons.Remove(id))
-            {
-                foreach (float uniqId in customItems.Where(x => x.Value.PsuedoType == id).Select(x => x.Key))
-                {
-                    customItems.Remove(uniqId);
-                }
-
-                customWeaponAmmo.Remove(id);
-
-                success = true;
-            }
-
-            return success;
-        }
-
-        /// <summary>
-        /// Creates a new custom item pickup in the world.
-        /// </summary>
-        /// <param name="id">ID of the registered custom item.</param>
-        /// <param name="position">The position of the pickup.</param>
-        /// <param name="rotation">The rotation of the pickup.</param>
-        /// <returns></returns>
-        public static CustomItem CreateItem(int id, Vector3 position, Quaternion rotation)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(position, rotation);
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
-        }
-
-        /// <summary>
-        /// Gives an item to a specified player.
-        /// </summary>
-        /// <param name="player">The player to receive the item.</param>
-        /// <param name="id">The ID of the item to give the player.</param>
-        /// <returns></returns>
-        public static CustomItem GiveItem(GameObject player, int id)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(player.GetComponent<Inventory>());
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
-        }
-
-        /// <summary>
-        /// Gives an item to a specified player.
-        /// </summary>
-        /// <param name="player">The player to receive the item.</param>
-        /// <param name="id">The ID of the item to give the player.</param>
-        /// <returns></returns>
-        public static CustomItem GiveItem(this Player player, int id)
-        {
-            return GiveItem((GameObject)player.GetGameObject(), id);
-        }
-
-        /// <summary>
-        /// Creates and registers a custom item.
-        /// </summary>
-        /// <param name="id">Pseudo ID of the custom item.</param>
-        /// <param name="inventory">Inventory of the player holding the item.</param>
-        /// <param name="index">Index at which the item is being held at.</param>
-        public static CustomItem ConvertItem(int id, Inventory inventory, int index)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(inventory, index);
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
-        }
-
-        /// <summary>
-        /// Creates and registers a custom item.
-        /// </summary>
-        /// <param name="id">Psuedo ID of the custom item.</param>
-        /// <param name="pickup">Item on the ground that should be registered.</param>
-        public static CustomItem ConvertItem(int id, Pickup pickup)
-        {
-            if (!registeredItems.ContainsKey(id))
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Psuedo ID is not registered to a custom item.");
-            }
-
-            CustomItem creation = registeredItems[id].Create(pickup);
-            customItems.Add(creation.UniqueId, creation);
-
-            return creation;
         }
 
         /// <summary>
         /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
         /// </summary>
         /// <param name="player">PlayerObject of the held item to retrieve.</param>
-        public static CustomItem HeldCustomItem(this Player player)
+        public CustomItem HeldCustomItem(Player player)
         {
             return HeldCustomItem((GameObject)player.GetGameObject());
         }
@@ -220,7 +74,16 @@ namespace ItemManager
         /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
         /// </summary>
         /// <param name="player">PlayerObject of the held item to retrieve.</param>
-        public static CustomItem HeldCustomItem(GameObject player)
+        internal CustomItemData InternalHeldCustomItem(Player player)
+        {
+            return InternalHeldCustomItem((GameObject)player.GetGameObject());
+        }
+
+        /// <summary>
+        /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
+        /// </summary>
+        /// <param name="player">PlayerObject of the held item to retrieve.</param>
+        public CustomItem HeldCustomItem(GameObject player)
         {
             int heldIndex = player.GetComponent<Inventory>().GetItemIndex();
 
@@ -228,32 +91,41 @@ namespace ItemManager
         }
 
         /// <summary>
-        /// Finds and returns all custom items within a player's inventory.
+        /// Finds and returns the currently held custom item from a player. Null if they are not holding any custom item.
         /// </summary>
-        /// <param name="player">PlayerObject that should be checked for custom items.</param>
-        public static CustomItem[] GetCustomItems(this Player player)
+        /// <param name="player">PlayerObject of the held item to retrieve.</param>
+        internal CustomItemData InternalHeldCustomItem(GameObject player)
         {
-            GameObject unityPlayer = (GameObject)player.GetGameObject();
+            int heldIndex = player.GetComponent<Inventory>().GetItemIndex();
 
-            return customItems.Values.Where(x => x.PlayerObject == unityPlayer).ToArray();
+            return heldIndex == -1 ? null : InternalFindCustomItem(player, heldIndex);
         }
 
         /// <summary>
         /// Finds and returns all custom items within a player's inventory.
         /// </summary>
         /// <param name="player">PlayerObject that should be checked for custom items.</param>
-        public static CustomItem[] GetCustomItems(GameObject player)
+        public CustomItem[] GetCustomItems(Player player)
         {
-            return customItems.Values.Where(x => x.PlayerObject == player).ToArray();
+            return GetCustomItems((GameObject) player.GetGameObject());
+        }
+
+        /// <summary>
+        /// Finds and returns all custom items within a player's inventory.
+        /// </summary>
+        /// <param name="player">PlayerObject that should be checked for custom items.</param>
+        public CustomItem[] GetCustomItems(GameObject player)
+        {
+            return items.SelectMany(x => x.Instances.Where(x => x.PlayerObject == player)).ToArray();
         }
 
         /// <summary>
         /// Checks if an item is an instance of a custom item.
         /// </summary>
         /// <param name="pickup">Item to check if it is a custom item.</param>
-        public static bool IsCustomItem(this Pickup pickup)
+        public bool IsCustomItem(Pickup pickup)
         {
-            return customItems.ContainsKey(pickup.info.durability);
+            return items.Any(x => x.Instances.Any(y => y.UniqueId == pickup.info.durability));
         }
 
         /// <summary>
@@ -261,7 +133,7 @@ namespace ItemManager
         /// </summary>
         /// <param name="player">PlayerObject that is holding the item to check.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
-        public static bool IsCustomItem(this Player player, int index)
+        public bool IsCustomItem(Player player, int index)
         {
             return IsCustomItem((GameObject)player.GetGameObject(), index);
         }
@@ -271,9 +143,9 @@ namespace ItemManager
         /// </summary>
         /// <param name="player">PlayerObject that is holding the item to check.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
-        public static bool IsCustomItem(GameObject player, int index)
+        public bool IsCustomItem(GameObject player, int index)
         {
-            return customItems.Values.Any(x => x.Index == index && x.PlayerObject == player);
+            return items.SelectMany(x => x.Instances).Any(x => x.Index == index && x.PlayerObject == player);
         }
 
         /// <summary>
@@ -281,7 +153,7 @@ namespace ItemManager
         /// </summary>
         /// <param name="player">PlayerObject that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
-        public static CustomItem FindCustomItem(this Player player, int index)
+        public CustomItem FindCustomItem(Player player, int index)
         {
             return FindCustomItem((GameObject)player.GetGameObject(), index);
         }
@@ -291,18 +163,45 @@ namespace ItemManager
         /// </summary>
         /// <param name="player">PlayerObject that is holding the custom item.</param>
         /// <param name="index">Index of the item in the player's inventory.</param>
-        public static CustomItem FindCustomItem(GameObject player, int index)
+        public CustomItem FindCustomItem(GameObject player, int index)
         {
-            return customItems.Values.FirstOrDefault(x => x.Index == index && x.PlayerObject == player);
+            return InternalFindCustomItem(player, index).Item;
         }
 
         /// <summary>
         /// Finds a custom item from a vanilla item. 
         /// </summary>
         /// <param name="pickup">The vanilla item.</param>
-        public static CustomItem FindCustomItem(this Pickup pickup)
+        internal CustomItemData InternalFindCustomItem(GameObject player, int index)
         {
-            return customItems.ContainsKey(pickup.info.durability) ? customItems[pickup.info.durability] : null;
+            foreach (WorldCustomItems type in items)
+            {
+                CustomItemData data = type.instancePairs.Values.FirstOrDefault(y => y.Item.PlayerObject == player && y.Item.Index == index);
+                if (data != null)
+                {
+                    return data;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Finds a custom item from a vanilla item. 
+        /// </summary>
+        /// <param name="pickup">The vanilla item.</param>
+        public CustomItem FindCustomItem(Pickup pickup)
+        {
+            return InternalFindCustomItem(pickup).Item;
+        }
+
+        /// <summary>
+        /// Finds a custom item from a vanilla item. 
+        /// </summary>
+        /// <param name="pickup">The vanilla item.</param>
+        internal CustomItemData InternalFindCustomItem(Pickup pickup)
+        {
+            return items.Select(x => x.instancePairs).FirstOrDefault(x => x.ContainsKey(pickup.info.durability))?[pickup.info.durability];
         }
 
         internal static void CorrectItemIndexes(CustomItem[] items, int index)

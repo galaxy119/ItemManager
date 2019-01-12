@@ -1,16 +1,23 @@
 ﻿using System.Linq;
-using RemoteAdmin;
+
 using Smod2.API;
 using Smod2.Commands;
+
 using UnityEngine;
+using RemoteAdmin;
 
 namespace ItemManager.Commands
 {
-    public class GiveCommand : ICommandHandler
+    public class GiveCommand : ImCommand
     {
-        public string[] OnCall(ICommandSender sender, string[] args)
+        protected override string Usage => "imgive <psuedo ID>";
+        protected override string Description => "Gives a player a custom item that has that psuedo ID.";
+
+        public GiveCommand(ImPlugin plugin) : base(plugin) { }
+
+        public override string[] OnCall(ICommandSender sender, string[] args)
         {
-            if (!(sender is Server) && sender is Player player && !Plugin.giveRanks.Contains(player.GetRankName()))
+            if (!(sender is Server) && sender is Player player && !plugin.giveRanks.Contains(player.GetRankName()))
             {
                 return new[]
                 {
@@ -57,16 +64,6 @@ namespace ItemManager.Commands
             {
                 "Added item successfully."
             };
-        }
-
-        public string GetUsage()
-        {
-            return "imgive <psuedo ID>";
-        }
-
-        public string GetCommandDescription()
-        {
-            return "Gives a player a custom item that has that psuedo ID.";
         }
     }
 }

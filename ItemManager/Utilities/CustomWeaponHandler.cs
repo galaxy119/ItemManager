@@ -1,23 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ItemManager.Utilities
 {
-    internal interface ICustomWeaponHandler : ICustomItemHandler
+    public interface ICustomWeaponHandler : ICustomItemHandler
     {
         int DefaultReserveAmmo { get; }
     }
 
-    internal class CustomWeaponHandler<TWeapon> : CustomItemHandler<TWeapon>, ICustomWeaponHandler where TWeapon : CustomItem, new() {
-        public int DefaultReserveAmmo { get; }
+    public class CustomWeaponHandler<TWeapon> : CustomItemHandler<TWeapon>, ICustomWeaponHandler where TWeapon : CustomWeapon, new()
+    {
+        public int DefaultReserveAmmo { get; set; }
 
-        public CustomWeaponHandler(int psuedoId, int defaultReserveAmmo) : base(psuedoId)
+        CustomItem ICustomItemHandler.Create(Vector3 position, Quaternion rotation)
         {
-            DefaultReserveAmmo = defaultReserveAmmo;
         }
     }
 }
