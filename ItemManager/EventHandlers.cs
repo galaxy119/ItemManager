@@ -11,27 +11,24 @@ using ItemManager.Events;
 
 using System.Linq;
 using ItemManager.Utilities;
-using RemoteAdmin;
 using Smod2.API;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace ItemManager
 {
-    public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate, 
-        IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot, 
-        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn, 
+    public class EventHandlers : IEventHandlerRoundStart, IEventHandlerRoundRestart, IEventHandlerPlayerPickupItemLate,
+        IEventHandlerPlayerDropItem, IEventHandlerSCP914Activate, IEventHandlerPlayerHurt, IEventHandlerShoot,
+        IEventHandlerMedkitUse, IEventHandlerPlayerDie, IEventHandlerRadioSwitch, IEventHandlerSpawn,
         IEventHandlerWaitingForPlayers, IEventHandlerReload
     {
         private readonly ImPlugin plugin;
-        private readonly List<CustomItem> waitingForShot;
         private readonly List<CustomItem> justShot;
 
         public EventHandlers(ImPlugin plugin)
         {
             this.plugin = plugin;
 
-            waitingForShot = new List<CustomItem>();
             justShot = new List<CustomItem>();
         }
 
@@ -178,7 +175,7 @@ namespace ItemManager
                     item = inventory.items.Last();
                 }
                 catch { }
-                
+
                 if (item != null && Items.customItems.ContainsKey(item.Value.durability))
                 {
                     CustomItem customItem = Items.customItems[item.Value.durability];
@@ -206,7 +203,8 @@ namespace ItemManager
                 CustomItem customItem = Items.FindCustomItem(player, dropIndex);
                 Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), dropIndex);
 
-                switch (customItem) {
+                switch (customItem)
+                {
                     case null:
                         return;
 
@@ -227,7 +225,7 @@ namespace ItemManager
                             Items.readyForDoubleDrop[customItem.UniqueId] = true;
 
                             Items.doubleDropTimers.Remove(customItem.UniqueId);
-                            Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy => 
+                            Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy =>
                             {
                                 Items.readyForDoubleDrop[customItem.UniqueId] = false;
                                 inventory.items.Remove(doubleDropDummy); //remove dummy from inventory
@@ -366,60 +364,30 @@ namespace ItemManager
 
                 if (customItem != null && !justShot.Contains(customItem))
                 {
-                    waitingForShot.Add(customItem);
+                    justShot.Add(customItem);
 
-                    Timing.Next(() =>
-                    {
-                        if (waitingForShot.Contains(customItem))
-                        {
-                            waitingForShot.Remove(customItem);
-                            return;
-                        }
+                    float damage = ev.Damage;
+                    customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
+                    ev.Damage = damage;
 
-                        justShot.Add(customItem);
-
-                        float damage = ev.Damage;
-                        customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
-                        GameObject target = (GameObject) ev.Player.GetGameObject();
-                        PlayerStats stats = target.GetComponent<PlayerStats>();
-
-                        float deltaDamage = damage - ev.Damage;
-                        if (damage > 0)
-                        {
-                            stats.HurtPlayer(new PlayerStats.HitInfo(
-                                damage - ev.Damage,
-                                customItem.PlayerObject.GetComponent<NicknameSync>().myNick + " (" +
-                                customItem.PlayerObject.GetComponent<CharacterClassManager>().SteamId + ")",
-                                DamageTypes.FromIndex((int)ev.DamageType),
-                                customItem.PlayerObject.GetComponent<QueryProcessor>().PlayerId
-                            ), target);
-                        }
-                        else if (damage < 0)
-                        {
-                            stats.health += (int)deltaDamage;
-                        }
-
-                        justShot.Remove(customItem);
-                    });
+                    justShot.Remove(customItem);
                 }
             }
         }
 
         public void OnShoot(PlayerShootEvent ev)
         {
+            if (ev.Target != null)
+            {
+                return;
+            }
+
             CustomItem customItem = ev.Player?.HeldCustomItem();
 
             if (customItem != null)
             {
-                if (waitingForShot.Contains(customItem))
-                {
-                    waitingForShot.Remove(customItem);
-                }
-                else
-                {
-                    float damage = 0;
-                    customItem.OnShoot(null, ref damage);
-                }
+                float damage = 0;
+                customItem.OnShoot(null, ref damage);
             }
         }
 
@@ -458,7 +426,7 @@ namespace ItemManager
             }
 
             int[] postItems = inventory.items.Select(x => x.uniq).ToArray();
-            
+
             index = postItems.Length;
             for (int i = 0; i < postItems.Length; i++)
             {
