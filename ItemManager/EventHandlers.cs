@@ -381,13 +381,23 @@ namespace ItemManager
                         float damage = ev.Damage;
                         customItem.OnShoot((GameObject)ev.Player.GetGameObject(), ref damage);
                         GameObject target = (GameObject) ev.Player.GetGameObject();
-                        target.GetComponent<PlayerStats>().HurtPlayer(new PlayerStats.HitInfo(
-                            damage - ev.Damage - 1,
-                            customItem.PlayerObject.GetComponent<NicknameSync>().myNick + " (" +
-                            customItem.PlayerObject.GetComponent<CharacterClassManager>().SteamId + ")",
-                            DamageTypes.FromIndex((int) ev.DamageType),
-                            customItem.PlayerObject.GetComponent<QueryProcessor>().PlayerId
-                        ), target);
+                        PlayerStats stats = target.GetComponent<PlayerStats>();
+
+                        float deltaDamage = damage - ev.Damage;
+                        if (damage > 0)
+                        {
+                            stats.HurtPlayer(new PlayerStats.HitInfo(
+                                damage - ev.Damage,
+                                customItem.PlayerObject.GetComponent<NicknameSync>().myNick + " (" +
+                                customItem.PlayerObject.GetComponent<CharacterClassManager>().SteamId + ")",
+                                DamageTypes.FromIndex((int)ev.DamageType),
+                                customItem.PlayerObject.GetComponent<QueryProcessor>().PlayerId
+                            ), target);
+                        }
+                        else if (damage < 0)
+                        {
+                            stats.health += (int)deltaDamage;
+                        }
 
                         justShot.Remove(customItem);
                     });
