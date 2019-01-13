@@ -4,6 +4,7 @@ using scp4aiur;
 using ItemManager.Commands;
 
 using Smod2;
+using Smod2.API;
 using Smod2.Config;
 using Smod2.Attributes;
 
@@ -29,8 +30,12 @@ namespace ItemManager
         SmodRevision = 2)]
     public class ImPlugin : Plugin
     {
+        internal const ItemType DefaultDropAmmoType = ItemType.COIN;
+        internal const int DefaultDropAmmoCount = 15;
+
         public HeldSetting HeldItems { get; private set; }
         public string[] GiveRanks { get; private set; }
+        public string[] AmmoRanks { get; private set; }
 
         public override void Register()
         {
@@ -40,16 +45,26 @@ namespace ItemManager
                 "owner",
                 "admin"
             }, SettingType.LIST, true, "Rank names that should be allowed to use the give command."));
+            AddConfig(new ConfigSetting("im_ammo_ranks", new[]
+            {
+                "owner",
+                "admin"
+            }, SettingType.LIST, true, "Rank names that should be allowed to use the ammo command."));
+            AddConfig(new ConfigSetting("im_ammo_type", (int)DefaultDropAmmoType, SettingType.NUMERIC, true, "Default item ID of custom ammo pickups."));
+            AddConfig(new ConfigSetting("im_ammo_count", DefaultDropAmmoCount, SettingType.NUMERIC, true, "Default amount of ammo in custom ammo pickups."));
 
             Timing.Init(this);
             AddEventHandlers(new EventHandlers(this));
             AddCommand("imgive", new GiveCommand(this));
+            AddCommand("imammo", new AmmoCommand(this));
         }
 
         public void RefreshConfig()
         {
-            HeldItems = (HeldSetting)GetConfigInt("im_helditems");
+            HeldItems = (HeldSetting) GetConfigInt("im_helditems");
             GiveRanks = GetConfigList("im_give_ranks");
+            Items.DefaultDroppedAmmoType = (ItemType) GetConfigInt("im_ammo_type");
+            Items.DefaultDroppedAmmoType = (ItemType)GetConfigInt("im_ammo_type");
         }
 
         public override void OnEnable()

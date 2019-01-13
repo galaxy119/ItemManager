@@ -32,7 +32,8 @@ namespace Example
             CustomWeaponHandler<BetterM4> betterM4 = new CustomWeaponHandler<BetterM4>(32)
             {
                 DefaultType = ItemType.E11_STANDARD_RIFLE,
-                DefaultReserveAmmo = 10
+                DefaultReserveAmmo = 10,
+                AmmoName = ".50 cal"
             };
             betterM4.Register();
             Items.AddRecipe(new Id914Recipe(KnobSetting.FINE, (int)ItemType.E11_STANDARD_RIFLE, 32, 1));

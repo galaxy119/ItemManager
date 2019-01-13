@@ -151,34 +151,37 @@ namespace ItemManager
             }
         }
 
+        private void Init(ICustomItemHandler handler)
+        {
+            Handler = handler;
+            UniqueId = Items.ids.NewId();
+        }
+
         private void RegisterEvents()
         {
-            UniqueId = Items.ids.NewId();
-            Items.customItems.Add(UniqueId, this);
-
             if (this is IDoubleDroppable)
             {
                 Items.doubleDropTimers.Add(UniqueId, int.MinValue);
                 Items.readyForDoubleDrop.Add(UniqueId, false);
             }
+
+            Items.customItems.Add(UniqueId, this);
         }
 
         internal void SetData(ICustomItemHandler handler, Vector3 pos, Quaternion rot)
         {
-            Handler = handler;
+            Init(handler);
 
-            Dropped = Items.hostInventory.SetPickup(0, UniqueId, pos, rot, 0, 0, 0).GetComponent<Pickup>();
+            Dropped = Items.hostInventory.SetPickup((int)handler.DefaultType, UniqueId, pos, rot, 0, 0, 0).GetComponent<Pickup>();
             Index = -1;
             Durability = 0;
-
-            VanillaType = handler.DefaultType;
 
             RegisterEvents();
         }
 
         internal void SetData(ICustomItemHandler handler, Pickup pickup)
         {
-            Handler = handler;
+            Init(handler);
 
             Dropped = pickup;
             Index = -1;
@@ -191,21 +194,19 @@ namespace ItemManager
 
         internal void SetData(ICustomItemHandler handler, Inventory inventory)
         {
-            Handler = handler;
+            Init(handler);
 
             PlayerObject = inventory.gameObject;
             Inventory = inventory;
             Index = Inventory.items.Count;
-            inventory.AddNewItem(0, 0);
-
-            VanillaType = handler.DefaultType;
+            inventory.AddNewItem((int)handler.DefaultType, 0);
 
             RegisterEvents();
         }
 
         internal void SetData(ICustomItemHandler handler, Inventory inventory, int index)
         {
-            Handler = handler;
+            Init(handler);
 
             PlayerObject = inventory.gameObject;
             Inventory = inventory;

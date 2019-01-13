@@ -178,7 +178,7 @@ namespace ItemManager
                     item = inventory.items.Last();
                 }
                 catch { }
-
+                
                 if (item != null && Items.customItems.ContainsKey(item.Value.durability))
                 {
                     CustomItem customItem = Items.customItems[item.Value.durability];

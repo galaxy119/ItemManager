@@ -19,17 +19,20 @@ namespace ItemManager
         private static readonly Dictionary<int, ICustomItemHandler> handlers = new Dictionary<int, ICustomItemHandler>();
         public static IReadOnlyDictionary<int, ICustomItemHandler> Handlers => handlers;
 
+        internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
+        internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
+
         internal static Dictionary<int, Dictionary<int, int>> customWeaponAmmo = new Dictionary<int, Dictionary<int, int>>();
 
         internal static Dictionary<float, CustomItem> customItems = new Dictionary<float, CustomItem>();
         internal static List<CustomItem> itemList = new List<CustomItem>();
         public static IReadOnlyList<CustomItem> AllItems => itemList;
 
-        internal static Dictionary<float, bool> readyForDoubleDrop = new Dictionary<float, bool>();
-        internal static Dictionary<float, int> doubleDropTimers = new Dictionary<float, int>();
-
         private static readonly List<Base914Recipe> recipes = new List<Base914Recipe>();
         public static IReadOnlyList<Base914Recipe> Recipes => recipes;
+
+        public static ItemType DefaultDroppedAmmoType { get; internal set; } = ImPlugin.DefaultDropAmmoType;
+        public static int DefaultDroppedAmmoCount { get; internal set; } = ImPlugin.DefaultDropAmmoCount;
 
         public const float DefaultDurability = -4.656647E+11f;
 
