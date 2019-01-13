@@ -70,12 +70,12 @@ namespace ItemManager
 
         public override void OnEnable()
         {
-
+            Info("Enabled Item Manager");
         }
 
         public override void OnDisable()
         {
-
+            Info("Disabled Item Manager");
         }
     }
 }
