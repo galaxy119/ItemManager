@@ -63,8 +63,9 @@ namespace ItemManager
         {
             HeldItems = (HeldSetting) GetConfigInt("im_helditems");
             GiveRanks = GetConfigList("im_give_ranks");
+            AmmoRanks = GetConfigList("im_ammo_ranks");
             Items.DefaultDroppedAmmoType = (ItemType) GetConfigInt("im_ammo_type");
-            Items.DefaultDroppedAmmoType = (ItemType)GetConfigInt("im_ammo_type");
+            Items.DefaultDroppedAmmoCount = GetConfigInt("im_ammo_count");
         }
 
         public override void OnEnable()
