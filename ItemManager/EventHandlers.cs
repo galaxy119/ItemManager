@@ -66,7 +66,10 @@ namespace ItemManager
                 Items.customItems.Remove(uniq);
             }
 
-            Items.customWeaponAmmo.Clear();
+            foreach (Dictionary<int, int> weaponAmmo in Items.customWeaponAmmo.Values)
+            {
+                weaponAmmo.Clear();
+            }
         }
 
         private static void InvokePickupEvent(CustomItem customItem, GameObject player, Inventory inventory, int index, Inventory.SyncItemInfo item)
