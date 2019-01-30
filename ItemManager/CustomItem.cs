@@ -166,6 +166,7 @@ namespace ItemManager
 			}
 
 			Items.customItems.Add(UniqueId, this);
+			Items.itemList.Add(this);
 		}
 
 		internal void SetData(ICustomItemHandler handler, Vector3 pos, Quaternion rot)
@@ -252,6 +253,7 @@ namespace ItemManager
 			Unhooked = true;
 
 			Items.customItems.Remove(UniqueId);
+			Items.itemList.Remove(this);
 
 			if (this is IDoubleDroppable)
 			{ //if double droppable
