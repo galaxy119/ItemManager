@@ -56,6 +56,15 @@ namespace ItemManager
 					Items.customWeaponAmmo[handler.PsuedoType].Add(ev.Player.PlayerId, handler.DefaultReserveAmmo);
 				}
 			}
+
+			foreach (float id in Items.customItems.Keys.ToArray())
+			{
+				CustomItem item = Items.customItems[id];
+				if (item.PlayerObject == (GameObject) ev.Player.GetGameObject())
+				{
+					item.Delete();
+				}
+			}
 		}
 
 		public void OnRoundRestart(RoundRestartEvent ev)
