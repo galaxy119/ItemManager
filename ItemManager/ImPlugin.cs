@@ -24,7 +24,7 @@ namespace ItemManager
 		name = "Item Manager",
 		description = "Allows other plugins to register custom item associations.",
 		id = "4aiur.custom.itemmanager",
-		version = "1.0.0",
+		version = "1.0.3",
 		SmodMajor = 3,
 		SmodMinor = 2,
 		SmodRevision = 2)]
