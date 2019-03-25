@@ -1,5 +1,7 @@
 # ItemManager [![Build status](https://ci.appveyor.com/api/projects/status/gojb9ucyfmdjn28p?svg=true)](https://ci.appveyor.com/project/probe4aiur/itemmanager)
-An SCP: Secret Laboratory plugin for easily implementing custom items.
+An SCP: Secret Laboratory plugin for easily implementing custom items.  
+
+I (Androx or probe4aiur) am no longer supporting this project, which includes new features and bugfixes. Feel free to contribute to it through a PR, but this project has grown too large and is in such a spaghetti state on top of the inherent flaw that it uses single frame delays meaning that many coroutines with this break. Feel free to contribute, but be aware of what you're stepping into.
 
 # Installation
 **[Smod2](https://github.com/Grover-c13/Smod2) must be installed for this to work.**  
