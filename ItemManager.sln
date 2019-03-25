@@ -11,16 +11,17 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+		Joker|Any CPU = Joker|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EB6E694C-88C4-45E5-8EB6-0A1DB1A2812B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EB6E694C-88C4-45E5-8EB6-0A1DB1A2812B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB6E694C-88C4-45E5-8EB6-0A1DB1A2812B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB6E694C-88C4-45E5-8EB6-0A1DB1A2812B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9C325CD0-FBE5-4FCA-88FC-B2BF15A39F83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9C325CD0-FBE5-4FCA-88FC-B2BF15A39F83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB6E694C-88C4-45E5-8EB6-0A1DB1A2812B}.Joker|Any CPU.ActiveCfg = Joker|Any CPU
+		{EB6E694C-88C4-45E5-8EB6-0A1DB1A2812B}.Joker|Any CPU.Build.0 = Joker|Any CPU
 		{9C325CD0-FBE5-4FCA-88FC-B2BF15A39F83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C325CD0-FBE5-4FCA-88FC-B2BF15A39F83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C325CD0-FBE5-4FCA-88FC-B2BF15A39F83}.Joker|Any CPU.ActiveCfg = Joker|Any CPU
+		{9C325CD0-FBE5-4FCA-88FC-B2BF15A39F83}.Joker|Any CPU.Build.0 = Joker|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

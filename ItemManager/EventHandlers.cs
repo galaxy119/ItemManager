@@ -24,6 +24,7 @@ namespace ItemManager
 	{
 		private readonly ImPlugin plugin;
 		private readonly List<CustomItem> justShot;
+		private static readonly System.Random getrandom = new System.Random();
 
 		public EventHandlers(ImPlugin plugin)
 		{
@@ -298,62 +299,41 @@ namespace ItemManager
 					}
 				}
 			}
-
+			object[] inputs = ev.Inputs;
+			Scp914 objectOfType = Object.FindObjectOfType<Scp914>();
+			if ((Object)objectOfType == (Object)null)
+			{
+				this.plugin.Error("Couldn't find SCP-914");
+				return;
+			}
 			if (plugin.HeldItems != HeldSetting.None)
 			{
-				foreach (Inventory inventory in colliders.Select(x => x.GetComponent<Inventory>()).Where(x => x != null))
+				foreach (Collider collider in inputs)
 				{
-					for (int i = 0; i < inventory.items.Count; i++)
+					Pickup component1 = collider.GetComponent<Pickup>();
+					if ((Object)component1 == (Object)null)
 					{
-						CustomItem item = Items.FindCustomItem(inventory.gameObject, i);
-
-						if (item == null)
+						NicknameSync component2 = collider.GetComponent<NicknameSync>();
+						CharacterClassManager component3 = collider.GetComponent<CharacterClassManager>();
+						PlyMovementSync component4 = collider.GetComponent<PlyMovementSync>();
+						PlayerStats component5 = collider.GetComponent<PlayerStats>();
+						if ((UnityEngine.Object)component2 != (UnityEngine.Object)null && (UnityEngine.Object)component3 != (UnityEngine.Object)null && ((UnityEngine.Object)component4 != (UnityEngine.Object)null && (UnityEngine.Object)component5 != (UnityEngine.Object)null) && (UnityEngine.Object)collider.gameObject != (UnityEngine.Object)null)
 						{
-							if ((plugin.HeldItems & HeldSetting.Vanilla) == HeldSetting.Vanilla)
+							GameObject gameObject = collider.gameObject;
+							Player player = new ServerMod2.API.SmodPlayer(gameObject);
+							if (player.TeamRole.Team != Smod2.API.Team.SCP && player.TeamRole.Team != Smod2.API.Team.NONE && player.TeamRole.Team != Smod2.API.Team.SPECTATOR)
 							{
-								Base914Recipe recipe = Items.Recipes.Where(x => x.IsMatch(ev.KnobSetting, inventory, i))
-									.OrderByDescending(x => x.Priority).FirstOrDefault();
-
-								if (recipe != null)
+								if (plugin.currentonly)
 								{
-									recipe.Run(inventory, i);
+									Smod2.API.Item item = player.GetCurrentItem();
+									doRecipe(item, objectOfType, player, ev.KnobSetting);
 								}
 								else
 								{
-									byte itemId = (byte)inventory.items[i].id;
-									byte knobId = (byte)ev.KnobSetting;
-									sbyte outputType = (sbyte)Items.scp.recipes[itemId].outputs[knobId].outputs[Random.Range(0, Items.scp.recipes[itemId].outputs[knobId].outputs.Count)];
-
-									if (outputType > 0)
+									foreach (Smod2.API.Item item in player.GetInventory())
 									{
-										inventory.items[i] = new Inventory.SyncItemInfo
-										{
-											id = outputType,
-											uniq = inventory.items[i].uniq
-										};
+										doRecipe(item, objectOfType, player, ev.KnobSetting);
 									}
-									else
-									{
-										Items.CorrectItemIndexes(Items.GetCustomItems(inventory.gameObject), i);
-										inventory.items.RemoveAt(i);
-									}
-								}
-							}
-						}
-						else
-						{
-							if ((plugin.HeldItems & HeldSetting.Custom) == HeldSetting.Custom)
-							{
-								Base914Recipe recipe = Items.Recipes.Where(x => x.IsMatch(ev.KnobSetting, item, true))
-									.OrderByDescending(x => x.Priority).FirstOrDefault(); //gets highest priority
-
-								if (recipe != null)
-								{
-									recipe.Run(item, true);
-								}
-								else
-								{
-									item.On914(ev.KnobSetting, item.PlayerObject.transform.position + (Items.scp.output_obj.position - Items.scp.intake_obj.position), true);
 								}
 							}
 						}
@@ -361,6 +341,28 @@ namespace ItemManager
 				}
 			}
 		}
+
+		public void doRecipe(Smod2.API.Item item, Scp914 objectOfType, Smod2.API.Player player, Smod2.API.KnobSetting knobSetting)
+		{
+			sbyte outputitem = -2;
+			try
+			{
+				outputitem = (sbyte)(objectOfType.recipes[(byte)item.ItemType].outputs[(byte)knobSetting].outputs[getrandom.Next(0, objectOfType.recipes[(byte)item.ItemType].outputs[(byte)knobSetting].outputs.Count)]);
+			}
+			catch (System.Exception)
+			{
+				this.plugin.Error("Recipe for " + item.ItemType + "does not exist!  Ask the game devs to add a recipe for it!");
+			}
+			if (outputitem != -2)
+			{
+				item.Remove();
+				this.plugin.Debug(item.ItemType + " ==> " + (ItemType)outputitem);
+			}
+			if (outputitem >= 0)
+			{
+				player.GiveItem((ItemType)outputitem);
+			}
+		}		
 
 		public void OnPlayerHurt(PlayerHurtEvent ev)
 		{
