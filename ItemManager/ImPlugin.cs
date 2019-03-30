@@ -16,6 +16,9 @@ namespace ItemManager
 		None = 0,
 		Custom = 1,
 		Vanilla = 2,
+		CurrentCustom = 3,
+		CurrentVanilla = 4,
+		CurrentAll = CurrentCustom | CurrentVanilla,
 		All = Custom | Vanilla
 	}
 
@@ -36,12 +39,10 @@ namespace ItemManager
 		public HeldSetting HeldItems { get; private set; }
 		public string[] GiveRanks { get; private set; }
 		public string[] AmmoRanks { get; private set; }
-		public bool CurrentOnly { get; private set; }
 
 		public override void Register()
 		{
 			AddConfig(new ConfigSetting("im_helditems", (int)HeldSetting.All, SettingType.NUMERIC, true, "Whether or not ItemManager will take held items into account in 914. 0 for none, 1 for only custom items, 2 for only normal items, 3 for all items."));
-			AddConfig(new ConfigSetting("im_helditems_currentonly", true, SettingType.BOOL, true, "If helditems should only affect the currently held item."));
 			AddConfig(new ConfigSetting("im_give_ranks", new[]
 			{
 				"owner",
@@ -64,7 +65,6 @@ namespace ItemManager
 		public void RefreshConfig()
 		{
 			HeldItems = (HeldSetting)GetConfigInt("im_helditems");
-			CurrentOnly = GetConfigBool("im_helditems_currentonly");
 			GiveRanks = GetConfigList("im_give_ranks");
 			AmmoRanks = GetConfigList("im_ammo_ranks");
 			Items.DefaultDroppedAmmoType = (ItemType)GetConfigInt("im_ammo_type");
