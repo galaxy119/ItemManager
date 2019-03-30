@@ -61,7 +61,7 @@ namespace ItemManager
 			foreach (float id in Items.customItems.Keys.ToArray())
 			{
 				CustomItem item = Items.customItems[id];
-				if (item.PlayerObject == (GameObject) ev.Player.GetGameObject())
+				if (item.PlayerObject == (GameObject)ev.Player.GetGameObject())
 				{
 					item.Delete();
 				}
@@ -181,7 +181,7 @@ namespace ItemManager
 		{
 			GameObject player = (GameObject)ev.Player.GetGameObject();
 			Inventory inventory = player.GetComponent<Inventory>();
-			
+
 			Inventory.SyncItemInfo? item = inventory.items.Last();
 
 			if (Items.customItems.ContainsKey(item.Value.durability))
@@ -199,7 +199,8 @@ namespace ItemManager
 
 			GetLostItem(inventory, out Pickup[] prePickups, out int[] preItems);
 
-			Timing.Next(() => {
+			Timing.Next(() =>
+			{
 				Pickup drop = GetLostItemTick(inventory, prePickups, preItems, out int dropIndex);
 
 				if (dropIndex == -1)
@@ -216,36 +217,36 @@ namespace ItemManager
 						return;
 
 					case IDoubleDroppable doubleDroppable when doubleDroppable.DoubleDropWindow > 0:
-					{
-						if (Items.readyForDoubleDrop[customItem.UniqueId])
 						{
-							Items.readyForDoubleDrop[customItem.UniqueId] = false;
-							Timing.Remove(Items.doubleDropTimers[customItem.UniqueId]);
-							
-							InvokeDoubleDropEvent(customItem, inventory, dropIndex, drop);
-						}
-						else
-						{
-							Pickup.PickupInfo info = drop.info;
-							drop.Delete(); //delete dropped item
-							Inventory.SyncItemInfo doubleDropDummy = ReinsertItem(inventory, dropIndex, info); //add item back to inventory
-							Items.readyForDoubleDrop[customItem.UniqueId] = true;
-
-							Items.doubleDropTimers.Remove(customItem.UniqueId);
-							Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy =>
+							if (Items.readyForDoubleDrop[customItem.UniqueId])
 							{
 								Items.readyForDoubleDrop[customItem.UniqueId] = false;
-								inventory.items.Remove(doubleDropDummy); //remove dummy from inventory
-								drop = Items.hostInventory //create item in world
-									.SetPickup(info.itemId, info.durability, player.transform.position, player.transform.rotation, info.weaponMods[0], info.weaponMods[1], info.weaponMods[2])
-									.GetComponent<Pickup>();
-								
-								InvokeDropEvent(customItem, inventory, dropIndex, drop);
-							}, doubleDroppable.DoubleDropWindow));
-						}
+								Timing.Remove(Items.doubleDropTimers[customItem.UniqueId]);
 
-						break;
-					}
+								InvokeDoubleDropEvent(customItem, inventory, dropIndex, drop);
+							}
+							else
+							{
+								Pickup.PickupInfo info = drop.info;
+								drop.Delete(); //delete dropped item
+								Inventory.SyncItemInfo doubleDropDummy = ReinsertItem(inventory, dropIndex, info); //add item back to inventory
+								Items.readyForDoubleDrop[customItem.UniqueId] = true;
+
+								Items.doubleDropTimers.Remove(customItem.UniqueId);
+								Items.doubleDropTimers.Add(customItem.UniqueId, Timing.In(inaccuracy =>
+								{
+									Items.readyForDoubleDrop[customItem.UniqueId] = false;
+									inventory.items.Remove(doubleDropDummy); //remove dummy from inventory
+									drop = Items.hostInventory //create item in world
+											.SetPickup(info.itemId, info.durability, player.transform.position, player.transform.rotation, info.weaponMods[0], info.weaponMods[1], info.weaponMods[2])
+											.GetComponent<Pickup>();
+
+									InvokeDropEvent(customItem, inventory, dropIndex, drop);
+								}, doubleDroppable.DoubleDropWindow));
+							}
+
+							break;
+						}
 
 					default:
 						InvokeDropEvent(customItem, inventory, dropIndex, drop);
@@ -323,16 +324,16 @@ namespace ItemManager
 							Player player = new ServerMod2.API.SmodPlayer(gameObject);
 							if (player.TeamRole.Team != Smod2.API.Team.SCP && player.TeamRole.Team != Smod2.API.Team.NONE && player.TeamRole.Team != Smod2.API.Team.SPECTATOR)
 							{
-								if (plugin.currentonly)
+								if (plugin.CurrentOnly)
 								{
 									Smod2.API.Item item = player.GetCurrentItem();
-									doRecipe(item, objectOfType, player, ev.KnobSetting);
+									DoRecipe(item, objectOfType, player, ev.KnobSetting);
 								}
 								else
 								{
 									foreach (Smod2.API.Item item in player.GetInventory())
 									{
-										doRecipe(item, objectOfType, player, ev.KnobSetting);
+										DoRecipe(item, objectOfType, player, ev.KnobSetting);
 									}
 								}
 							}
@@ -342,7 +343,7 @@ namespace ItemManager
 			}
 		}
 
-		public void doRecipe(Smod2.API.Item item, Scp914 objectOfType, Smod2.API.Player player, Smod2.API.KnobSetting knobSetting)
+		public void DoRecipe(Smod2.API.Item item, Scp914 objectOfType, Smod2.API.Player player, Smod2.API.KnobSetting knobSetting)
 		{
 			sbyte outputitem = -2;
 			try
@@ -362,7 +363,7 @@ namespace ItemManager
 			{
 				player.GiveItem((ItemType)outputitem);
 			}
-		}		
+		}
 
 		public void OnPlayerHurt(PlayerHurtEvent ev)
 		{
@@ -405,7 +406,8 @@ namespace ItemManager
 			Inventory inventory = player.GetComponent<Inventory>();
 			GetLostItem(inventory, out Inventory.SyncItemInfo[] preItems);
 
-			Timing.Next(() => {
+			Timing.Next(() =>
+			{
 				GetLostItemTick(inventory, preItems, out int index);
 
 				if (index == -1)
@@ -493,7 +495,8 @@ namespace ItemManager
 				Vector3 deathPosition = ((GameObject)ev.Player.GetGameObject()).transform.position;
 				Pickup[] prePickups = Object.FindObjectsOfType<Pickup>();
 
-				Timing.Next(() => {
+				Timing.Next(() =>
+				{
 					Pickup[] postPickups = Object.FindObjectsOfType<Pickup>();
 					Pickup[] deathPickups = postPickups
 						.Except(prePickups)
